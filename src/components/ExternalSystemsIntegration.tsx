@@ -1,21 +1,12 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell
+  Cell,
+  Tooltip
 } from 'recharts';
-import { useDataStore, useUIStore } from '../store';
 import { ContextualVideoBackground } from './VideoBackground';
 
 interface ExternalSystemsIntegrationProps {
@@ -63,7 +54,6 @@ interface APIEndpoint {
 }
 
 export function ExternalSystemsIntegration({ className = '' }: ExternalSystemsIntegrationProps) {
-  const { addNotification } = useUIStore();
   const [selectedSystem, setSelectedSystem] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'overview' | 'systems' | 'streams' | 'apis'>('overview');
   const [filterStatus, setFilterStatus] = useState<string>('all');

@@ -1,21 +1,17 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import {
-  LineChart,
-  Line,
   AreaChart,
   Area,
-  ScatterChart,
-  Scatter,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer,
-  ReferenceLine
+  ResponsiveContainer
 } from 'recharts';
-import { useDataStore, useUIStore } from '../store';
+import { useDataStore } from '../store';
 import { ContextualVideoBackground } from './VideoBackground';
 import { ChartErrorBoundary } from './ErrorBoundary';
 
@@ -51,8 +47,7 @@ interface MLModel {
 }
 
 export function AnomalyDetectionEngine({ className = '' }: AnomalyDetectionEngineProps) {
-  const { metrics, alerts, incidents } = useDataStore();
-  const { addNotification } = useUIStore();
+  const { metrics } = useDataStore();
   const [selectedModel, setSelectedModel] = useState<string>('ensemble');
   const [timeWindow, setTimeWindow] = useState<'1h' | '4h' | '24h' | '7d'>('24h');
   const [severityFilter, setSeverityFilter] = useState<string>('all');

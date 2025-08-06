@@ -52,7 +52,6 @@ function nearbyLocation(center: GeoLocation, radiusKm: number = 5): GeoLocation 
 // Mock data generators
 class MockDataGenerator {
   private tick = 0;
-  private baseTime = new Date();
   private alertHistory: Alert[] = [];
   private incidentHistory: Incident[] = [];
   private networkNodes: NetworkTopology['nodes'] = [];

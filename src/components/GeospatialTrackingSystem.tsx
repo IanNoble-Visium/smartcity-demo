@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useDataStore, useUIStore } from '../store';
+import { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { ContextualVideoBackground } from './VideoBackground';
-import type { GeoLocation, Incident } from '../types';
+import type { GeoLocation } from '../types';
 
 interface GeospatialTrackingSystemProps {
   className?: string;
@@ -41,8 +40,6 @@ interface TrafficFlow {
 }
 
 export function GeospatialTrackingSystem({ className = '' }: GeospatialTrackingSystemProps) {
-  const { incidents } = useDataStore();
-  const { addNotification } = useUIStore();
   const [selectedAsset, setSelectedAsset] = useState<string | null>(null);
   const [mapView, setMapView] = useState<'satellite' | 'street' | 'hybrid'>('hybrid');
   const [showTrafficFlow, setShowTrafficFlow] = useState(true);

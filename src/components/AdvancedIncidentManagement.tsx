@@ -1,20 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
-} from 'recharts';
-import { useDataStore, useUIStore } from '../store';
+import { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { ContextualVideoBackground } from './VideoBackground';
-import type { Incident, Evidence } from '../types';
+import type { Evidence } from '../types';
 
 interface AdvancedIncidentManagementProps {
   className?: string;
@@ -66,11 +53,7 @@ interface CollaborationTool {
 }
 
 export function AdvancedIncidentManagement({ className = '' }: AdvancedIncidentManagementProps) {
-  const { incidents } = useDataStore();
-  const { addNotification } = useUIStore();
-  const [selectedIncident, setSelectedIncident] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'workflows' | 'evidence' | 'collaboration' | 'analytics'>('workflows');
-  const [workflowFilter, setWorkflowFilter] = useState<string>('all');
 
   // Mock incident workflows
   const incidentWorkflows = useMemo((): IncidentWorkflow[] => [

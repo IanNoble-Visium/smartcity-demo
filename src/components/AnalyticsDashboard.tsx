@@ -1,14 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Plot from 'react-plotly.js';
-import type { Data, Layout } from 'plotly.js';
+import type { Data } from 'plotly.js';
 import { useDataStore, useUIStore } from '../store';
 import type {
   AnalyticsMetric,
-  ChartConfig,
-  TimeRange,
-  KPIDefinition,
-  PredictiveModel
+  TimeRange
 } from '../types/analytics';
 
 interface AnalyticsDashboardProps {
@@ -16,11 +13,10 @@ interface AnalyticsDashboardProps {
 }
 
 export function AnalyticsDashboard({ className = '' }: AnalyticsDashboardProps) {
-  const { metrics, alerts, incidents } = useDataStore();
+  const { metrics } = useDataStore();
   const { addNotification } = useUIStore();
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange['preset']>('24h');
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
-  const [drillDownLevel, setDrillDownLevel] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
 
   // Generate analytics metrics from current data
@@ -291,11 +287,11 @@ export function AnalyticsDashboard({ className = '' }: AnalyticsDashboardProps) 
               font: { color: '#e5e7eb' },
               xaxis: {
                 gridcolor: '#374151',
-                title: 'Time'
+                title: { text: 'Time' }
               },
               yaxis: {
                 gridcolor: '#374151',
-                title: `${metric.name} (${metric.unit})`
+                title: { text: `${metric.name} (${metric.unit})` }
               },
               legend: {
                 orientation: 'h',

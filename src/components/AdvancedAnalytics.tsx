@@ -1,12 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LineChart,
   Line,
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -32,7 +28,7 @@ interface AdvancedAnalyticsProps {
 }
 
 export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
-  const { metrics, alerts, incidents } = useDataStore();
+  const { metrics } = useDataStore();
   const { addNotification } = useUIStore();
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange['preset']>('24h');
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
@@ -341,7 +337,7 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
                   fill="#8884d8"
                   dataKey="count"
                 >
-                  {categoryData.map((entry, index) => (
+                  {categoryData.map((_entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>

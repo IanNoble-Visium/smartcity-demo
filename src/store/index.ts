@@ -27,32 +27,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isAuthenticated: false,
   permissions: [],
   
-  login: async (email: string, password: string) => {
+  login: async (email: string, _password: string) => {
     // Mock authentication - replace with actual API call
     const mockUser: User = {
       id: 'user-001',
       name: 'Sarah Chen',
       email: email,
-      role: 'operations_manager',
+      role: 'admin',
       department: 'Smart City Operations',
       permissions: [
-        { resource: 'dashboards', actions: ['read', 'write'] },
-        { resource: 'incidents', actions: ['read', 'write'] },
-        { resource: 'alerts', actions: ['read', 'write'] },
-        { resource: 'reports', actions: ['read'] }
+        'read_all',
+        'write_all',
+        'admin_access',
+        'view_incidents',
+        'write_incidents'
       ],
       preferences: {
         theme: 'dark',
-        dashboardLayout: {
-          id: 'default-ops',
-          name: 'Operations Dashboard',
-          type: 'operational',
-          widgets: [],
-          layout: { columns: 12, rows: 8, gap: 16, responsive: true },
-          filters: [],
-          refreshInterval: 30000,
-          isDefault: true
-        },
+        dashboardLayout: 'operational',
         notifications: {
           email: true,
           push: true,
@@ -69,9 +61,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({
       user: mockUser,
       isAuthenticated: true,
-      permissions: mockUser.permissions.flatMap(p => 
-        p.actions.map(action => `${p.resource}:${action}`)
-      )
+      permissions: mockUser.permissions
     });
   },
 
