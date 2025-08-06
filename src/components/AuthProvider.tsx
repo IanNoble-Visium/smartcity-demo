@@ -311,11 +311,11 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Enhanced Video Background */}
-      <div className="absolute inset-0 z-0">
+    <div className="h-screen relative overflow-hidden">
+      {/* Enhanced Full-Screen Video Background */}
+      <div className="video-background-container">
         <video
-          className="w-full h-full object-cover"
+          className="video-background"
           autoPlay
           loop
           muted
@@ -326,205 +326,145 @@ function LoginForm() {
           <source src="/video/Futuristic_NOC_Video_Ready.mp4" type="video/mp4" />
           <source src="/video/Dynamic_City_Map_Video_Ready.mp4" type="video/mp4" />
         </video>
-        
-        {/* Animated overlay gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900/90 via-blue-900/80 to-slate-800/90"></div>
-        
-        {/* Animated grid overlay */}
-        <div className="absolute inset-0 opacity-20">
-          {Array.from({ length: 20 }).map((_, i) => (
-            <motion.div
-              key={`grid-h-${i}`}
-              className="absolute border-t border-cyan-400/30"
-              style={{ top: `${i * 5}%`, width: '100%' }}
-              initial={{ opacity: 0, scaleX: 0 }}
-              animate={{ 
-                opacity: [0, 0.6, 0],
-                scaleX: [0, 1, 0]
-              }}
-              transition={{ 
-                duration: 4, 
-                delay: i * 0.1, 
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            />
-          ))}
-          {Array.from({ length: 20 }).map((_, i) => (
-            <motion.div
-              key={`grid-v-${i}`}
-              className="absolute border-l border-green-400/30"
-              style={{ left: `${i * 5}%`, height: '100%' }}
-              initial={{ opacity: 0, scaleY: 0 }}
-              animate={{ 
-                opacity: [0, 0.6, 0],
-                scaleY: [0, 1, 0]
-              }}
-              transition={{ 
-                duration: 4, 
-                delay: i * 0.15, 
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            />
-          ))}
-        </div>
 
-        {/* Floating particles */}
-        <div className="absolute inset-0">
-          {Array.from({ length: 15 }).map((_, i) => (
-            <motion.div
-              key={`particle-${i}`}
-              className="absolute w-2 h-2 bg-cyan-400/60 rounded-full"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-              }}
-              animate={{
-                x: [0, Math.random() * 200 - 100],
-                y: [0, Math.random() * 200 - 100],
-                opacity: [0, 1, 0],
-                scale: [0, 1.5, 0],
-              }}
-              transition={{
-                duration: 6 + Math.random() * 4,
-                repeat: Infinity,
-                delay: Math.random() * 3,
-                ease: "easeInOut"
-              }}
-            />
-          ))}
-        </div>
+        {/* Enhanced multi-layer overlay for maximum text readability */}
+        <div className="absolute inset-0 bg-slate-900/98"></div>
+        <div className="absolute inset-0 bg-black/80"></div>
+
+        {/* Additional gradient overlay for better text contrast */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900/95 via-slate-800/85 to-slate-900/95"></div>
+
+        {/* Final overlay for optimal readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-slate-900/90"></div>
+
       </div>
 
       {/* Main Content */}
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
-          
-          {/* Left Side - Branding and Info */}
-          <motion.div 
-            className="text-center lg:text-left space-y-6"
+      <div className="relative z-10 h-screen flex items-center justify-center p-4">
+        <div className="w-full max-w-6xl grid lg:grid-cols-5 gap-6 items-center h-full max-h-[calc(100vh-2rem)]">
+
+          {/* Left Side - Compact Branding */}
+          <motion.div
+            className="lg:col-span-2 text-center lg:text-left space-y-4 p-4 rounded-xl bg-slate-900/60 backdrop-blur-sm border border-white/10"
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            {/* Logo and Title */}
-            <div className="space-y-4">
-              <motion.div 
-                className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-full border border-cyan-500/30 backdrop-blur-md"
+            {/* Compact Logo and Title */}
+            <div className="space-y-3">
+              <motion.div
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 rounded-full border border-cyan-400/50 backdrop-blur-md"
                 animate={{
                   boxShadow: [
-                    '0 0 20px rgba(6, 182, 212, 0.3)',
-                    '0 0 40px rgba(6, 182, 212, 0.6)',
-                    '0 0 20px rgba(6, 182, 212, 0.3)'
+                    '0 0 15px rgba(6, 182, 212, 0.4)',
+                    '0 0 25px rgba(6, 182, 212, 0.7)',
+                    '0 0 15px rgba(6, 182, 212, 0.4)'
                   ]
                 }}
-                transition={{ duration: 4, repeat: Infinity }}
+                transition={{ duration: 3, repeat: Infinity }}
               >
-                <span className="text-3xl">🏙️</span>
-                <div className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+                <span className="text-2xl">🏙️</span>
+                <div className="text-xl font-bold bg-gradient-to-r from-cyan-300 to-blue-300 bg-clip-text text-transparent">
                   TruContext
                 </div>
               </motion.div>
-              
-              <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight">
+
+              <h1 className="text-2xl lg:text-3xl font-bold text-white leading-tight enhanced-text-shadow">
                 Smart City
-                <span className="block bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+                <span className="block bg-gradient-to-r from-cyan-100 to-blue-100 bg-clip-text text-transparent enhanced-drop-shadow">
                   Operations
                 </span>
               </h1>
-              
-              <p className="text-xl text-slate-300 max-w-lg">
-                Secure access to city management systems with real-time monitoring, 
-                AI-powered analytics, and comprehensive incident response capabilities.
+
+              <p className="text-sm lg:text-base text-slate-50 max-w-md leading-relaxed enhanced-text-shadow">
+                Secure access to city management systems with real-time monitoring and AI-powered analytics.
               </p>
             </div>
 
-            {/* Feature highlights */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg">
+            {/* Compact Feature highlights */}
+            <div className="grid grid-cols-2 gap-2 max-w-md">
               {[
-                { icon: '🛡️', title: 'Secure Access', desc: 'Enterprise-grade security' },
-                { icon: '📊', title: 'Real-time Data', desc: 'Live city monitoring' },
-                { icon: '🤖', title: 'AI Analytics', desc: 'Intelligent insights' },
-                { icon: '🚨', title: 'Incident Response', desc: 'Rapid emergency handling' }
+                { icon: '🛡️', title: 'Secure Access' },
+                { icon: '📊', title: 'Real-time Data' },
+                { icon: '🤖', title: 'AI Analytics' },
+                { icon: '🚨', title: 'Incident Response' }
               ].map((feature, index) => (
                 <motion.div
                   key={feature.title}
-                  className="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/10 backdrop-blur-sm"
-                  initial={{ opacity: 0, y: 20 }}
+                  className="flex items-center gap-2 p-2 bg-white/20 rounded-lg border border-white/30 backdrop-blur-sm shadow-lg"
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
+                  transition={{ duration: 0.3, delay: 0.3 + index * 0.05 }}
                 >
-                  <span className="text-2xl">{feature.icon}</span>
-                  <div>
-                    <div className="font-semibold text-white text-sm">{feature.title}</div>
-                    <div className="text-xs text-slate-400">{feature.desc}</div>
-                  </div>
+                  <span className="text-lg">{feature.icon}</span>
+                  <div className="font-semibold text-white text-xs drop-shadow-sm">{feature.title}</div>
                 </motion.div>
               ))}
             </div>
           </motion.div>
 
-          {/* Right Side - Login Form */}
-          <motion.div 
-            className="w-full max-w-md mx-auto"
+          {/* Right Side - Compact Login Form */}
+          <motion.div
+            className="lg:col-span-3 w-full max-w-lg mx-auto"
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
           >
-            <div className="bg-slate-900/90 backdrop-blur-xl border border-cyan-500/30 rounded-2xl p-8 shadow-2xl">
-              {/* Form Header */}
-              <div className="text-center mb-8">
-                <motion.div 
-                  className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4"
-                  animate={{
-                    boxShadow: [
-                      '0 0 20px rgba(6, 182, 212, 0.5)',
-                      '0 0 30px rgba(6, 182, 212, 0.8)',
-                      '0 0 20px rgba(6, 182, 212, 0.5)'
-                    ]
-                  }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                >
-                  <span className="text-2xl">🔐</span>
-                </motion.div>
-                <h2 className="text-2xl font-bold text-white mb-2">Welcome Back</h2>
-                <p className="text-slate-400 text-sm">Sign in to access the command center</p>
-              </div>
-
-              {/* Login Form */}
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
-                      Email Address
-                    </label>
-                    <input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-white placeholder-slate-400 transition-all duration-200"
-                      placeholder="Enter your email"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
-                      Password
-                    </label>
-                    <input
-                      id="password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-white placeholder-slate-400 transition-all duration-200"
-                      placeholder="Enter your password"
-                      required
-                    />
-                  </div>
+            <div className="bg-slate-900/99 backdrop-blur-xl border-2 border-cyan-400/60 rounded-xl p-6 shadow-2xl ring-2 ring-white/20"
+                 style={{ backgroundColor: 'rgba(15, 23, 42, 0.98)' }}>
+              <div className="relative z-10">
+                {/* Compact Form Header */}
+                <div className="text-center mb-6">
+                  <motion.div
+                    className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 ring-2 ring-cyan-400/30"
+                    animate={{
+                      boxShadow: [
+                        '0 0 15px rgba(6, 182, 212, 0.6)',
+                        '0 0 25px rgba(6, 182, 212, 0.9)',
+                        '0 0 15px rgba(6, 182, 212, 0.6)'
+                      ]
+                    }}
+                    transition={{ duration: 2.5, repeat: Infinity }}
+                  >
+                    <span className="text-2xl">🔐</span>
+                  </motion.div>
+                  <h2 className="text-2xl font-bold text-white mb-2 enhanced-text-shadow">Welcome Back</h2>
+                  <p className="text-slate-50 text-sm enhanced-text-shadow">Sign in to access the command center</p>
                 </div>
+
+                {/* Compact Login Form */}
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-semibold text-white mb-2 enhanced-text-shadow">
+                        Email Address
+                      </label>
+                      <input
+                        id="email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full px-4 py-3 bg-white/95 border-2 border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-slate-900 placeholder-slate-500 transition-all duration-200 text-sm font-medium shadow-inner"
+                        placeholder="Enter your email"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="password" className="block text-sm font-semibold text-white mb-2 enhanced-text-shadow">
+                        Password
+                      </label>
+                      <input
+                        id="password"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full px-4 py-3 bg-white/95 border-2 border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-slate-900 placeholder-slate-500 transition-all duration-200 text-sm font-medium shadow-inner"
+                        placeholder="Enter your password"
+                        required
+                      />
+                    </div>
+                  </div>
 
                 {error && (
                   <motion.div 
@@ -536,75 +476,74 @@ function LoginForm() {
                   </motion.div>
                 )}
 
-                <motion.button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {isLoading ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                      Signing In...
-                    </div>
-                  ) : (
-                    'Sign In'
-                  )}
-                </motion.button>
+                  <motion.button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg text-base"
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                  >
+                    {isLoading ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        Signing In...
+                      </div>
+                    ) : (
+                      'Sign In'
+                    )}
+                  </motion.button>
               </form>
 
-              {/* Demo Users */}
-              <div className="mt-8 pt-6 border-t border-slate-700">
-                <h3 className="text-sm font-medium mb-4 text-center text-slate-300">Demo Access</h3>
-                <div className="grid grid-cols-1 gap-3">
-                  {demoUsers.map((user, index) => (
-                    <motion.button
-                      key={user.email}
-                      onClick={() => selectUser(user.email)}
-                      className={`text-left p-4 rounded-lg border transition-all duration-200 ${
-                        selectedUser === user.email
-                          ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300'
-                          : 'bg-slate-800/30 border-slate-600 hover:bg-slate-700/50 text-slate-300'
-                      }`}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.1 }}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{user.icon}</span>
-                        <div className="flex-1">
-                          <div className="font-medium text-sm">{user.email}</div>
-                          <div className="text-xs opacity-75">{user.role}</div>
-                          <div className="text-xs opacity-60 mt-1">{user.description}</div>
+                {/* Compact Demo Users */}
+                <div className="mt-6 pt-4 border-t border-slate-500/50">
+                  <h3 className="text-sm font-semibold mb-3 text-center text-white enhanced-text-shadow">Quick Demo Access</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {demoUsers.map((user, index) => (
+                      <motion.button
+                        key={user.email}
+                        onClick={() => selectUser(user.email)}
+                        className={`text-left p-3 rounded-lg border transition-all duration-200 shadow-md ${
+                          selectedUser === user.email
+                            ? 'bg-cyan-500/40 border-cyan-300/80 text-cyan-50 shadow-cyan-500/20'
+                            : 'bg-white/20 border-slate-300/60 hover:bg-white/30 text-white shadow-black/20'
+                        }`}
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.2, delay: index * 0.05 }}
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.99 }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{user.icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-xs truncate">{user.email}</div>
+                            <div className="text-xs opacity-80 truncate">{user.role}</div>
+                          </div>
                         </div>
-                      </div>
-                    </motion.button>
-                  ))}
+                      </motion.button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-center text-slate-100 mt-3 enhanced-text-shadow">
+                    Password: <code className="bg-white/30 px-2 py-1 rounded text-cyan-100 font-semibold shadow-lg">demo123</code>
+                  </p>
                 </div>
-                <p className="text-xs text-center text-slate-500 mt-4">
-                  Password: <code className="bg-slate-800 px-2 py-1 rounded text-cyan-400">demo123</code>
-                </p>
               </div>
             </div>
           </motion.div>
         </div>
       </div>
 
-      {/* Bottom branding */}
-      <motion.div 
-        className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-center text-slate-400 text-xs"
+      {/* Compact Bottom branding */}
+      <motion.div
+        className="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-center text-slate-300 text-xs bg-slate-900/60 px-4 py-2 rounded-full backdrop-blur-sm border border-white/10"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1, delay: 1 }}
       >
         <div className="flex items-center gap-2">
-          <span>Powered by</span>
-          <span className="font-semibold text-cyan-400">Visium Technologies</span>
-          <span>•</span>
-          <span>TruContext Platform</span>
+          <span className="font-semibold text-cyan-200 drop-shadow-sm">Visium Technologies</span>
+          <span className="text-slate-300">•</span>
+          <span className="text-slate-200 drop-shadow-sm">TruContext Platform</span>
         </div>
       </motion.div>
     </div>

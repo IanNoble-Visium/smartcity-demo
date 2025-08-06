@@ -812,3 +812,69 @@ body {
 .space-x-2 > * + * { margin-left: var(--space-sm); }
 .space-x-3 > * + * { margin-left: var(--space-md); }
 .space-x-4 > * + * { margin-left: var(--space-lg); }
+
+/* Enhanced Video Background Styles */
+.video-background-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.video-background {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  min-width: 100%;
+  min-height: 100%;
+  width: auto;
+  height: auto;
+  transform: translate(-50%, -50%);
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Ensure video covers viewport on different screen ratios */
+@media (aspect-ratio: 16/9) {
+  .video-background {
+    width: 100%;
+    height: auto;
+  }
+}
+
+@media (aspect-ratio: 4/3) {
+  .video-background {
+    width: auto;
+    height: 100%;
+  }
+}
+
+@media (max-aspect-ratio: 16/9) {
+  .video-background {
+    width: auto;
+    height: 100%;
+  }
+}
+
+@media (min-aspect-ratio: 16/9) {
+  .video-background {
+    width: 100%;
+    height: auto;
+  }
+}
+
+/* Enhanced text readability with improved shadows */
+.enhanced-text-shadow {
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.8),
+    0 2px 6px rgba(0, 0, 0, 0.6),
+    0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.enhanced-drop-shadow {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8))
+          drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6));
+}

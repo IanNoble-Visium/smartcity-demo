@@ -430,9 +430,9 @@ export function EnhancedLiveMap({ incidents }: { incidents: Incident[] }) {
     },
     {
       id: 'demo-incident-3',
-      type: 'security' as const,
+      type: 'cyber_attack' as const,
       severity: 'critical' as const,
-      status: 'active' as const,
+      status: 'investigating' as const,
       location: { latitude: 39.2804, longitude: -76.6022 },
       startTime: new Date().toISOString(),
       summary: 'Security breach detected',
