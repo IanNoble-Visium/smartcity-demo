@@ -17,6 +17,7 @@ import {
 } from 'recharts';
 import { useDataStore, useUIStore } from '../store';
 import { ContextualVideoBackground } from './VideoBackground';
+import { ChartErrorBoundary } from './ErrorBoundary';
 
 interface AnomalyDetectionEngineProps {
   className?: string;
@@ -293,68 +294,70 @@ export function AnomalyDetectionEngine({ className = '' }: AnomalyDetectionEngin
       </div>
       
       <div className="card-content">
-        <ResponsiveContainer width="100%" height={400}>
-          <LineChart data={timeSeriesData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis 
-              dataKey="time" 
-              stroke="#9ca3af"
-              fontSize={12}
-            />
-            <YAxis 
-              stroke="#9ca3af"
-              fontSize={12}
-            />
-            <Tooltip 
-              contentStyle={{
-                backgroundColor: '#1f2937',
-                border: '1px solid #374151',
-                borderRadius: '8px',
-                color: '#e5e7eb'
-              }}
-            />
-            <Legend />
-            
-            {/* Normal data range */}
-            <Area
-              type="monotone"
-              dataKey="upperBound"
-              stackId="1"
-              stroke="none"
-              fill="#10b981"
-              fillOpacity={0.1}
-            />
-            <Area
-              type="monotone"
-              dataKey="lowerBound"
-              stackId="1"
-              stroke="none"
-              fill="#ffffff"
-              fillOpacity={1}
-            />
-            
-            {/* Normal values */}
-            <Line 
-              type="monotone" 
-              dataKey="value" 
-              stroke="#3b82f6" 
-              strokeWidth={2}
-              name="Metric Value"
-              dot={false}
-            />
-            
-            {/* Anomalies */}
-            <Line 
-              type="monotone" 
-              dataKey="anomaly" 
-              stroke="#ef4444" 
-              strokeWidth={3}
-              name="Detected Anomalies"
-              dot={{ fill: '#ef4444', strokeWidth: 2, r: 6 }}
-              connectNulls={false}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        <ChartErrorBoundary>
+          <ResponsiveContainer width="100%" height={400}>
+            <AreaChart data={timeSeriesData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis
+                dataKey="time"
+                stroke="#9ca3af"
+                fontSize={12}
+              />
+              <YAxis
+                stroke="#9ca3af"
+                fontSize={12}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#1f2937',
+                  border: '1px solid #374151',
+                  borderRadius: '8px',
+                  color: '#e5e7eb'
+                }}
+              />
+              <Legend />
+              
+              {/* Normal data range */}
+              <Area
+                type="monotone"
+                dataKey="upperBound"
+                stackId="1"
+                stroke="none"
+                fill="#10b981"
+                fillOpacity={0.1}
+              />
+              <Area
+                type="monotone"
+                dataKey="lowerBound"
+                stackId="1"
+                stroke="none"
+                fill="#ffffff"
+                fillOpacity={1}
+              />
+              
+              {/* Normal values */}
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke="#3b82f6"
+                strokeWidth={2}
+                name="Metric Value"
+                dot={false}
+              />
+              
+              {/* Anomalies */}
+              <Line
+                type="monotone"
+                dataKey="anomaly"
+                stroke="#ef4444"
+                strokeWidth={3}
+                name="Detected Anomalies"
+                dot={{ fill: '#ef4444', strokeWidth: 2, r: 6 }}
+                connectNulls={false}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </ChartErrorBoundary>
       </div>
     </div>
   );

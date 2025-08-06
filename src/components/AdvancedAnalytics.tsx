@@ -21,6 +21,7 @@ import {
 } from 'recharts';
 import { useDataStore, useUIStore } from '../store';
 import { ContextualVideoBackground } from './VideoBackground';
+import { ChartErrorBoundary } from './ErrorBoundary';
 import type { 
   AnalyticsMetric, 
   TimeRange 
@@ -178,18 +179,20 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
               
               {/* Mini sparkline */}
               <div className="w-16 h-8">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={generateTimeSeriesData(metric, 6)}>
-                    <Line 
-                      type="monotone" 
-                      dataKey="value" 
-                      stroke={metric.trend === 'up' ? '#10b981' : 
-                             metric.trend === 'down' ? '#f59e0b' : '#6b7280'}
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                <ChartErrorBoundary>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={generateTimeSeriesData(metric, 6)}>
+                      <Line
+                        type="monotone"
+                        dataKey="value"
+                        stroke={metric.trend === 'up' ? '#10b981' :
+                               metric.trend === 'down' ? '#f59e0b' : '#6b7280'}
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </ChartErrorBoundary>
               </div>
             </div>
           </div>
@@ -238,59 +241,61 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
         </div>
         
         <div className="card-content">
-          <ResponsiveContainer width="100%" height={400}>
-            <LineChart data={timeSeriesData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis 
-                dataKey="time" 
-                stroke="#9ca3af"
-                fontSize={12}
-              />
-              <YAxis 
-                stroke="#9ca3af"
-                fontSize={12}
-              />
-              <Tooltip 
-                contentStyle={{
-                  backgroundColor: '#1f2937',
-                  border: '1px solid #374151',
-                  borderRadius: '8px',
-                  color: '#e5e7eb'
-                }}
-              />
-              <Legend />
-              <Line 
-                type="monotone" 
-                dataKey="value" 
-                stroke="#3b82f6" 
-                strokeWidth={3}
-                name={metric.name}
-                dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
-              />
-              {metric.threshold && (
-                <>
-                  <Line 
-                    type="monotone" 
-                    dataKey="warning" 
-                    stroke="#f59e0b" 
-                    strokeWidth={2}
-                    strokeDasharray="5 5"
-                    name="Warning Threshold"
-                    dot={false}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="critical" 
-                    stroke="#ef4444" 
-                    strokeWidth={2}
-                    strokeDasharray="5 5"
-                    name="Critical Threshold"
-                    dot={false}
-                  />
-                </>
-              )}
-            </LineChart>
-          </ResponsiveContainer>
+          <ChartErrorBoundary>
+            <ResponsiveContainer width="100%" height={400}>
+              <LineChart data={timeSeriesData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis
+                  dataKey="time"
+                  stroke="#9ca3af"
+                  fontSize={12}
+                />
+                <YAxis
+                  stroke="#9ca3af"
+                  fontSize={12}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#1f2937',
+                    border: '1px solid #374151',
+                    borderRadius: '8px',
+                    color: '#e5e7eb'
+                  }}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#3b82f6"
+                  strokeWidth={3}
+                  name={metric.name}
+                  dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
+                />
+                {metric.threshold && (
+                  <>
+                    <Line
+                      type="monotone"
+                      dataKey="warning"
+                      stroke="#f59e0b"
+                      strokeWidth={2}
+                      strokeDasharray="5 5"
+                      name="Warning Threshold"
+                      dot={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="critical"
+                      stroke="#ef4444"
+                      strokeWidth={2}
+                      strokeDasharray="5 5"
+                      name="Critical Threshold"
+                      dot={false}
+                    />
+                  </>
+                )}
+              </LineChart>
+            </ResponsiveContainer>
+          </ChartErrorBoundary>
         </div>
       </motion.div>
     );
@@ -323,32 +328,34 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
         </div>
         
         <div className="card-content">
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={categoryData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ category, percent }) => `${category} ${((percent || 0) * 100).toFixed(0)}%`}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="count"
-              >
-                {categoryData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip 
-                contentStyle={{
-                  backgroundColor: '#1f2937',
-                  border: '1px solid #374151',
-                  borderRadius: '8px',
-                  color: '#e5e7eb'
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+          <ChartErrorBoundary>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={categoryData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ category, percent }) => `${category} ${((percent || 0) * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="count"
+                >
+                  {categoryData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#1f2937',
+                    border: '1px solid #374151',
+                    borderRadius: '8px',
+                    color: '#e5e7eb'
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </ChartErrorBoundary>
         </div>
       </div>
     );
@@ -374,17 +381,19 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
         </div>
         
         <div className="card-content">
-          <ResponsiveContainer width="100%" height={200}>
-            <RadialBarChart cx="50%" cy="50%" innerRadius="60%" outerRadius="90%" data={gaugeData}>
-              <RadialBar
-                background
-                dataKey="value"
-              />
-              <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="text-2xl font-bold fill-primary">
-                {overallScore.toFixed(1)}
-              </text>
-            </RadialBarChart>
-          </ResponsiveContainer>
+          <ChartErrorBoundary>
+            <ResponsiveContainer width="100%" height={200}>
+              <RadialBarChart cx="50%" cy="50%" innerRadius="60%" outerRadius="90%" data={gaugeData}>
+                <RadialBar
+                  background
+                  dataKey="value"
+                />
+                <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="text-2xl font-bold fill-primary">
+                  {overallScore.toFixed(1)}
+                </text>
+              </RadialBarChart>
+            </ResponsiveContainer>
+          </ChartErrorBoundary>
         </div>
       </div>
     );

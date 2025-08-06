@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { Incident } from '../types';
+import { MapErrorBoundary } from './ErrorBoundary';
 
 interface MapLayer {
   id: string;
@@ -153,23 +154,24 @@ export function LiveMap({ incidents }: { incidents: Incident[] }) {
   }
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="border-b border-accent pb-3 mb-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-semibold">Live City Map</h3>
-            <p className="text-xs text-secondary">Baltimore Metropolitan Area</p>
-          </div>
-          <div className="flex items-center gap-2 text-xs">
-            <span className="status-indicator status-success">Online</span>
-            <span className="text-muted">Zoom: {viewport.zoom.toFixed(1)}</span>
+    <MapErrorBoundary>
+      <div className="h-full flex flex-col">
+        {/* Header */}
+        <div className="border-b border-accent pb-3 mb-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold">Live City Map</h3>
+              <p className="text-xs text-secondary">Baltimore Metropolitan Area</p>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="status-indicator status-success">Online</span>
+              <span className="text-muted">Zoom: {viewport.zoom.toFixed(1)}</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Map Container */}
-      <div className="flex-1 relative bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg overflow-hidden">
+        {/* Map Container */}
+        <div className="flex-1 relative bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg overflow-hidden">
         {/* Simulated Map Background */}
         <div className="absolute inset-0 opacity-20">
           <div className="w-full h-full bg-gradient-to-br from-blue-900/30 to-green-900/30"></div>
@@ -242,7 +244,8 @@ export function LiveMap({ incidents }: { incidents: Incident[] }) {
             </div>
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </MapErrorBoundary>
   );
 }

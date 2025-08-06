@@ -10,7 +10,10 @@ import { Header } from "./components/Header";
 import { AdvancedAnalytics } from "./components/AdvancedAnalytics";
 import { AnomalyDetectionEngine } from "./components/AnomalyDetectionEngine";
 import { GeospatialTrackingSystem } from "./components/GeospatialTrackingSystem";
+import { ExternalSystemsIntegration } from "./components/ExternalSystemsIntegration";
+import { AdvancedIncidentManagement } from "./components/AdvancedIncidentManagement";
 import { ContextualVideoBackground } from "./components/VideoBackground";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AuthProvider, withAuth, ProtectedComponent } from "./components/AuthProvider";
 import { useMockRealtime } from "./mock/useMockRealtime";
 import { useDataStore, useUIStore } from "./store";
@@ -19,7 +22,7 @@ function Dashboard() {
   const { metrics, alerts, incidents, topology } = useMockRealtime();
   const { updateMetrics, addAlert, addIncident, updateTopology } = useDataStore();
   const { addNotification } = useUIStore();
-  const [activeView, setActiveView] = useState<'dashboard' | 'analytics' | 'anomaly' | 'geospatial'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'analytics' | 'anomaly' | 'geospatial' | 'systems' | 'incidents'>('dashboard');
 
   // Update global stores with real-time data
   useEffect(() => {
@@ -66,30 +69,42 @@ function Dashboard() {
   // Navigation Component
   const Navigation = () => (
     <div className="bg-secondary border-b border-secondary mb-6">
-      <div className="flex items-center gap-1 p-2">
+      <div className="flex items-center gap-1 p-2 overflow-x-auto">
         <button
-          className={`btn text-xs ${activeView === 'dashboard' ? 'btn-primary' : 'btn-ghost'}`}
+          className={`btn text-xs whitespace-nowrap ${activeView === 'dashboard' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => setActiveView('dashboard')}
         >
           Executive Dashboard
         </button>
         <button
-          className={`btn text-xs ${activeView === 'analytics' ? 'btn-primary' : 'btn-ghost'}`}
+          className={`btn text-xs whitespace-nowrap ${activeView === 'analytics' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => setActiveView('analytics')}
         >
           Advanced Analytics
         </button>
         <button
-          className={`btn text-xs ${activeView === 'anomaly' ? 'btn-primary' : 'btn-ghost'}`}
+          className={`btn text-xs whitespace-nowrap ${activeView === 'anomaly' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => setActiveView('anomaly')}
         >
           AI/ML Detection
         </button>
         <button
-          className={`btn text-xs ${activeView === 'geospatial' ? 'btn-primary' : 'btn-ghost'}`}
+          className={`btn text-xs whitespace-nowrap ${activeView === 'geospatial' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => setActiveView('geospatial')}
         >
           Geospatial Tracking
+        </button>
+        <button
+          className={`btn text-xs whitespace-nowrap ${activeView === 'systems' ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={() => setActiveView('systems')}
+        >
+          External Systems
+        </button>
+        <button
+          className={`btn text-xs whitespace-nowrap ${activeView === 'incidents' ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={() => setActiveView('incidents')}
+        >
+          Incident Management
         </button>
       </div>
     </div>
@@ -266,6 +281,14 @@ function Dashboard() {
         {activeView === 'geospatial' && (
           <GeospatialTrackingSystem />
         )}
+        
+        {activeView === 'systems' && (
+          <ExternalSystemsIntegration />
+        )}
+        
+        {activeView === 'incidents' && (
+          <AdvancedIncidentManagement />
+        )}
       </main>
     </div>
   );
@@ -276,9 +299,16 @@ const AuthenticatedDashboard = withAuth(Dashboard);
 
 function App() {
   return (
-    <AuthProvider>
-      <AuthenticatedDashboard />
-    </AuthProvider>
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        console.error('Application Error:', error, errorInfo);
+        // Here you could send error reports to a logging service
+      }}
+    >
+      <AuthProvider>
+        <AuthenticatedDashboard />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 
