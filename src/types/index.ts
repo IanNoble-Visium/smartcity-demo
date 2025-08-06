@@ -12,20 +12,27 @@ export interface User {
   isActive: boolean;
 }
 
-export type UserRole = 
-  | 'executive' 
-  | 'operations_manager' 
-  | 'soc_analyst' 
-  | 'noc_analyst' 
-  | 'utility_operator' 
-  | 'transport_planner' 
-  | 'emergency_responder' 
-  | 'maintenance_tech';
+export type UserRole = 'admin' | 'operator' | 'analyst' | 'viewer';
 
-export interface Permission {
-  resource: string;
-  actions: ('read' | 'write' | 'delete' | 'admin')[];
-}
+export type Permission = 
+  | 'read_all' 
+  | 'write_all' 
+  | 'admin_access' 
+  | 'user_management' 
+  | 'system_config'
+  | 'write_incidents'
+  | 'manage_alerts'
+  | 'update_status'
+  | 'assign_incidents'
+  | 'export_data'
+  | 'create_reports'
+  | 'view_analytics'
+  | 'query_data'
+  | 'read_public_safety'
+  | 'view_incidents'
+  | 'view_alerts';
+
+export type DashboardLayout = 'executive' | 'operational' | 'analytical' | 'domain_specific';
 
 export interface UserPreferences {
   theme: 'dark' | 'light';
@@ -197,18 +204,16 @@ export interface NetworkEdge {
 }
 
 // Dashboard and Visualization
-export interface DashboardLayout {
+export interface DashboardConfig {
   id: string;
   name: string;
-  type: DashboardType;
+  type: DashboardLayout;
   widgets: Widget[];
   layout: LayoutConfig;
   filters: FilterConfig[];
   refreshInterval: number;
   isDefault: boolean;
 }
-
-export type DashboardType = 'executive' | 'operational' | 'domain_specific';
 
 export interface Widget {
   id: string;
