@@ -288,9 +288,14 @@ export function AnomalyDetectionEngine({ className = '' }: AnomalyDetectionEngin
         </div>
       </div>
       
-      <div className="card-content">
+      <div className="card-content" style={{ minHeight: '400px' }}>
         <ChartErrorBoundary>
-          <ResponsiveContainer width="100%" height={400}>
+          <ResponsiveContainer
+            width="100%"
+            height={400}
+            minWidth={300}
+            minHeight={400}
+          >
             <AreaChart data={timeSeriesData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis

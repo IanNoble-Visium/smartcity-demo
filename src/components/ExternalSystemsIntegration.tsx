@@ -255,8 +255,13 @@ export function ExternalSystemsIntegration({ className = '' }: ExternalSystemsIn
             <span className="text-xs text-muted">{externalSystems.length} total systems</span>
           </div>
           
-          <div className="card-content">
-            <ResponsiveContainer width="100%" height={200}>
+          <div className="card-content" style={{ minHeight: '200px' }}>
+            <ResponsiveContainer
+              width="100%"
+              height={200}
+              minWidth={200}
+              minHeight={200}
+            >
               <PieChart>
                 <Pie
                   data={chartData}

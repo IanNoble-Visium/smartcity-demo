@@ -129,6 +129,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error('Failed to parse stored user data:', error);
         localStorage.removeItem('trucontext_user');
       }
+    } else {
+      // Auto-login for demo purposes with admin user
+      const demoUser = mockUsers[0]; // Admin user
+      const userWithUpdatedLogin = {
+        ...demoUser,
+        lastLogin: new Date().toISOString()
+      };
+      setUser(userWithUpdatedLogin);
+      localStorage.setItem('trucontext_user', JSON.stringify(userWithUpdatedLogin));
     }
     setIsLoading(false);
   }, []);

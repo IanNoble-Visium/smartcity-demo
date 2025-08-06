@@ -711,6 +711,24 @@ body {
   pointer-events: none;
 }
 
+/* Chart Container Fixes */
+.recharts-responsive-container {
+  min-width: 0 !important;
+  min-height: 0 !important;
+}
+
+/* Ensure chart containers maintain dimensions */
+.card-content .recharts-responsive-container {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Mini chart containers */
+.w-16.h-8 .recharts-responsive-container {
+  width: 64px !important;
+  height: 32px !important;
+}
+
 .skeleton {
   background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-card) 50%, var(--bg-tertiary) 75%);
   background-size: 200% 100%;

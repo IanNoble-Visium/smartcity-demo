@@ -174,9 +174,15 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
               </div>
               
               {/* Mini sparkline */}
-              <div className="w-16 h-8">
+              <div className="w-16 h-8" style={{ minWidth: '64px', minHeight: '32px' }}>
                 <ChartErrorBoundary>
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer
+                    width="100%"
+                    height="100%"
+                    minWidth={64}
+                    minHeight={32}
+                    aspect={2}
+                  >
                     <LineChart data={generateTimeSeriesData(metric, 6)}>
                       <Line
                         type="monotone"
@@ -236,9 +242,14 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
           </div>
         </div>
         
-        <div className="card-content">
+        <div className="card-content" style={{ minHeight: '400px' }}>
           <ChartErrorBoundary>
-            <ResponsiveContainer width="100%" height={400}>
+            <ResponsiveContainer
+              width="100%"
+              height={400}
+              minWidth={300}
+              minHeight={400}
+            >
               <LineChart data={timeSeriesData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis
@@ -323,9 +334,14 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
           <span className="text-xs text-muted">Distribution of metrics across categories</span>
         </div>
         
-        <div className="card-content">
+        <div className="card-content" style={{ minHeight: '300px' }}>
           <ChartErrorBoundary>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer
+              width="100%"
+              height={300}
+              minWidth={250}
+              minHeight={300}
+            >
               <PieChart>
                 <Pie
                   data={categoryData}
@@ -376,9 +392,14 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
           <span className="status-indicator status-success">Real-time</span>
         </div>
         
-        <div className="card-content">
+        <div className="card-content" style={{ minHeight: '200px' }}>
           <ChartErrorBoundary>
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer
+              width="100%"
+              height={200}
+              minWidth={200}
+              minHeight={200}
+            >
               <RadialBarChart cx="50%" cy="50%" innerRadius="60%" outerRadius="90%" data={gaugeData}>
                 <RadialBar
                   background

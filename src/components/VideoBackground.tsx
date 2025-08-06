@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { useVideoGeneration } from './PlaceholderVideoGenerator';
 
 interface VideoBackgroundProps {
   videoSrc: string;
@@ -10,6 +11,8 @@ interface VideoBackgroundProps {
   loop?: boolean;
   autoPlay?: boolean;
   fallbackImage?: string;
+  fallbackGradient?: string;
+  enableAnimatedFallback?: boolean;
   children?: React.ReactNode;
 }
 
@@ -22,6 +25,8 @@ export function VideoBackground({
   loop = true,
   autoPlay = true,
   fallbackImage,
+  fallbackGradient,
+  enableAnimatedFallback = true,
   children
 }: VideoBackgroundProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -71,12 +76,79 @@ export function VideoBackground({
         transition={{ duration: 0.8, ease: "easeOut" }}
       />
 
-      {/* Fallback Image */}
-      {(hasError || !isLoaded) && fallbackImage && (
-        <div 
-          className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${fallbackImage})` }}
-        />
+      {/* Fallback Content */}
+      {(hasError || !isLoaded) && (
+        <div className="absolute inset-0 w-full h-full">
+          {/* Fallback Image */}
+          {fallbackImage && (
+            <div
+              className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
+              style={{ backgroundImage: `url(${fallbackImage})` }}
+            />
+          )}
+
+          {/* Fallback Gradient */}
+          {!fallbackImage && fallbackGradient && (
+            <div
+              className="absolute inset-0 w-full h-full"
+              style={{ background: fallbackGradient }}
+            />
+          )}
+
+          {/* Default Animated Fallback */}
+          {!fallbackImage && !fallbackGradient && enableAnimatedFallback && (
+            <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
+              {/* Animated grid pattern */}
+              <div className="absolute inset-0 opacity-20">
+                <div className="w-full h-full bg-gradient-to-br from-blue-900/30 to-green-900/30"></div>
+                <div className="absolute inset-0 opacity-30">
+                  {Array.from({ length: 20 }).map((_, i) => (
+                    <motion.div
+                      key={`h-${i}`}
+                      className="absolute border-t border-blue-400/20"
+                      style={{ top: `${i * 5}%`, width: '100%' }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: [0, 0.5, 0] }}
+                      transition={{ duration: 3, delay: i * 0.1, repeat: Infinity }}
+                    />
+                  ))}
+                  {Array.from({ length: 20 }).map((_, i) => (
+                    <motion.div
+                      key={`v-${i}`}
+                      className="absolute border-l border-green-400/20"
+                      style={{ left: `${i * 5}%`, height: '100%' }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: [0, 0.5, 0] }}
+                      transition={{ duration: 3, delay: i * 0.15, repeat: Infinity }}
+                    />
+                  ))}
+                </div>
+
+                {/* Floating particles */}
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <motion.div
+                    key={`particle-${i}`}
+                    className="absolute w-2 h-2 bg-blue-400/40 rounded-full"
+                    style={{
+                      left: `${Math.random() * 100}%`,
+                      top: `${Math.random() * 100}%`,
+                    }}
+                    animate={{
+                      x: [0, Math.random() * 100 - 50],
+                      y: [0, Math.random() * 100 - 50],
+                      opacity: [0, 1, 0],
+                    }}
+                    transition={{
+                      duration: 4 + Math.random() * 2,
+                      repeat: Infinity,
+                      delay: Math.random() * 2,
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Overlay */}
@@ -107,29 +179,29 @@ export function VideoBackground({
   );
 }
 
-// Video mapping for different dashboard sections
+// Video mapping for different dashboard sections with fallback configurations
 export const VIDEO_MAPPINGS = {
   // Dashboard backgrounds
   executive: '/video/Futuristic_NOC_Video_Ready.mp4',
   analytics: '/video/Animated_dashboard_walkthrough_202508060020_.mp4',
   map: '/video/Smart_City_Sunrise_Video_Generation.mp4',
   energy: '/video/Overhead_animation_of_202508060022_488qw.mp4',
-  
+
   // Alert and incident videos
   cybersecurity: '/video/Cyberattack_Visualization_and_Response.mp4',
   emergency: '/video/Emergency_Response_Drone_and_Ambulance_Dispatch.mp4',
   traffic: '/video/Smart_Traffic_Flow_Optimization_Timelapse.mp4',
-  
+
   // Infrastructure monitoring
   network: '/video/City_IoT_Connectivity_Flyover_Video.mp4',
   infrastructure: '/video/3d_visualization_of_202508060022_v98bv.mp4',
   environmental: '/video/Closeups_of_air_202508060021_eydg8.mp4',
-  
+
   // Operations and management
   operations: '/video/Splitscreen_city_operations_202508060021_o7.mp4',
   control_room: '/video/Touchscreen_wall_in_202508060023_mcpqe.mp4',
   citizen_services: '/video/Diverse_citizens_interacting_202508060021_66y.mp4',
-  
+
   // Specialized views
   transit: '/video/Smart_public_transit_202508060021_cdetx.mp4',
   night_operations: '/video/Nighttime_cityscape_with_202508060021_arch5.mp4',
@@ -138,6 +210,30 @@ export const VIDEO_MAPPINGS = {
   network_analysis: '/video/Graph_network_view_202508060022_1uief.mp4',
   emergency_response: '/video/Scene_transition_smart_202508060022_nfeaf.mp4',
   citizen_experience: '/video/Virtual_citizen_experience_202508060022_odh0.mp4'
+} as const;
+
+// Fallback gradients for different contexts
+export const FALLBACK_GRADIENTS = {
+  executive: 'linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%)',
+  analytics: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
+  map: 'linear-gradient(135deg, #0c4a6e 0%, #075985 50%, #0369a1 100%)',
+  energy: 'linear-gradient(135deg, #166534 0%, #15803d 50%, #16a34a 100%)',
+  cybersecurity: 'linear-gradient(135deg, #7c2d12 0%, #dc2626 50%, #ef4444 100%)',
+  emergency: 'linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #f87171 100%)',
+  traffic: 'linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%)',
+  network: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%)',
+  infrastructure: 'linear-gradient(135deg, #7c3aed 0%, #8b5cf6 50%, #a78bfa 100%)',
+  environmental: 'linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%)',
+  operations: 'linear-gradient(135deg, #374151 0%, #4b5563 50%, #6b7280 100%)',
+  control_room: 'linear-gradient(135deg, #1f2937 0%, #374151 50%, #4b5563 100%)',
+  citizen_services: 'linear-gradient(135deg, #0891b2 0%, #06b6d4 50%, #22d3ee 100%)',
+  transit: 'linear-gradient(135deg, #7c2d12 0%, #ea580c 50%, #fb923c 100%)',
+  night_operations: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
+  grid_monitoring: 'linear-gradient(135deg, #166534 0%, #15803d 50%, #16a34a 100%)',
+  dynamic_mapping: 'linear-gradient(135deg, #0c4a6e 0%, #0284c7 50%, #0ea5e9 100%)',
+  network_analysis: 'linear-gradient(135deg, #581c87 0%, #7c3aed 50%, #8b5cf6 100%)',
+  emergency_response: 'linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #f87171 100%)',
+  citizen_experience: 'linear-gradient(135deg, #0891b2 0%, #06b6d4 50%, #67e8f9 100%)'
 } as const;
 
 export type VideoMappingKey = keyof typeof VIDEO_MAPPINGS;
@@ -155,7 +251,7 @@ export function useContextualVideo(context: VideoMappingKey, fallback?: VideoMap
 }
 
 // Enhanced video background with context awareness
-interface ContextualVideoBackgroundProps extends Omit<VideoBackgroundProps, 'videoSrc'> {
+interface ContextualVideoBackgroundProps extends Omit<VideoBackgroundProps, 'videoSrc' | 'fallbackGradient'> {
   context: VideoMappingKey;
   fallback?: VideoMappingKey;
 }
@@ -166,6 +262,34 @@ export function ContextualVideoBackground({
   ...props
 }: ContextualVideoBackgroundProps) {
   const videoSrc = useContextualVideo(context, fallback);
-  
-  return <VideoBackground videoSrc={videoSrc} {...props} />;
+  const fallbackGradient = FALLBACK_GRADIENTS[context] || FALLBACK_GRADIENTS.executive;
+  const { generateVideoForContext } = useVideoGeneration();
+  const [placeholderVideoSrc, setPlaceholderVideoSrc] = useState<string>('');
+
+  // Generate placeholder video when original video fails to load
+  useEffect(() => {
+    const generatePlaceholder = async () => {
+      try {
+        const placeholderUrl = await generateVideoForContext(context);
+        setPlaceholderVideoSrc(placeholderUrl);
+      } catch (error) {
+        console.warn('Failed to generate placeholder video:', error);
+      }
+    };
+
+    // Only generate placeholder if we don't have one yet
+    if (!placeholderVideoSrc) {
+      generatePlaceholder();
+    }
+  }, [context, generateVideoForContext, placeholderVideoSrc]);
+
+  return (
+    <VideoBackground
+      videoSrc={videoSrc}
+      fallbackImage={placeholderVideoSrc}
+      fallbackGradient={fallbackGradient}
+      enableAnimatedFallback={true}
+      {...props}
+    />
+  );
 }

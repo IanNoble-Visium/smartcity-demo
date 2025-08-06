@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import type { Incident } from '../types';
 import { MapErrorBoundary } from './ErrorBoundary';
 
@@ -37,25 +38,76 @@ const baltimoreViewport: MapViewport = {
 function IncidentMarker({ incident, onClick }: { incident: Incident; onClick: () => void }) {
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical': return 'bg-critical border-critical';
-      case 'high': return 'bg-alert border-alert';
-      case 'medium': return 'bg-warning border-warning';
-      default: return 'bg-info border-info';
+      case 'critical': return { bg: 'bg-red-500', border: 'border-red-500', ring: 'border-red-400' };
+      case 'high': return { bg: 'bg-orange-500', border: 'border-orange-500', ring: 'border-orange-400' };
+      case 'medium': return { bg: 'bg-yellow-500', border: 'border-yellow-500', ring: 'border-yellow-400' };
+      default: return { bg: 'bg-blue-500', border: 'border-blue-500', ring: 'border-blue-400' };
     }
   };
 
+  const getIncidentIcon = (type: string) => {
+    switch (type) {
+      case 'fire': return '🔥';
+      case 'medical': return '🚑';
+      case 'traffic': return '🚗';
+      case 'security': return '🚨';
+      case 'infrastructure': return '⚡';
+      case 'environmental': return '🌿';
+      default: return '⚠️';
+    }
+  };
+
+  const colors = getSeverityColor(incident.severity);
+
   return (
-    <div 
-      className={`absolute w-4 h-4 rounded-full border-2 cursor-pointer transform -translate-x-2 -translate-y-2 animate-pulse hover:scale-125 transition-transform ${
-        getSeverityColor(incident.severity)
-      }`}
+    <motion.div
+      className="absolute cursor-pointer"
       style={{
         left: `${50 + (incident.location.longitude + 76.6122) * 100}%`,
-        top: `${50 - (incident.location.latitude - 39.2904) * 100}%`
+        top: `${50 - (incident.location.latitude - 39.2904) * 100}%`,
+        transform: 'translate(-50%, -50%)'
       }}
       onClick={onClick}
-      title={`${incident.type}: ${incident.description}`}
-    />
+      whileHover={{ scale: 1.2 }}
+      whileTap={{ scale: 0.9 }}
+      initial={{ scale: 0, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      {/* Pulsing ring for critical incidents */}
+      {incident.severity === 'critical' && (
+        <motion.div
+          className={`absolute w-8 h-8 rounded-full border-2 ${colors.ring}`}
+          style={{ transform: 'translate(-50%, -50%)' }}
+          animate={{ scale: [1, 2, 1], opacity: [0.8, 0, 0.8] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        />
+      )}
+
+      {/* Main marker */}
+      <div
+        className={`w-5 h-5 rounded-full border-2 shadow-lg ${colors.bg} ${colors.border} flex items-center justify-center`}
+        style={{ transform: 'translate(-50%, -50%)' }}
+        title={`${incident.type}: ${incident.description}`}
+      >
+        {/* Incident type icon */}
+        <span className="text-xs">
+          {getIncidentIcon(incident.type)}
+        </span>
+      </div>
+
+      {/* Status indicator */}
+      <motion.div
+        className={`absolute w-2 h-2 rounded-full ${colors.bg}`}
+        style={{
+          transform: 'translate(-50%, -50%)',
+          left: '75%',
+          top: '25%'
+        }}
+        animate={{ opacity: [1, 0.3, 1] }}
+        transition={{ duration: 1.5, repeat: Infinity }}
+      />
+    </motion.div>
   );
 }
 
@@ -125,11 +177,47 @@ export function LiveMap({ incidents }: { incidents: Incident[] }) {
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Ensure we always have some incidents to display for demo purposes
+  const displayIncidents = incidents.length > 0 ? incidents : [
+    {
+      id: 'demo-incident-1',
+      type: 'traffic_accident' as const,
+      severity: 'medium' as const,
+      status: 'investigating' as const,
+      location: { latitude: 39.2904, longitude: -76.6122 },
+      startTime: new Date().toISOString(),
+      summary: 'Traffic incident on I-95',
+      description: 'Multi-vehicle accident causing delays',
+      affectedSystems: ['traffic-001'],
+      responders: ['unit-12'],
+      timeline: [],
+      evidence: []
+    },
+    {
+      id: 'demo-incident-2',
+      type: 'infrastructure_failure' as const,
+      severity: 'high' as const,
+      status: 'responding' as const,
+      location: { latitude: 39.3004, longitude: -76.6222 },
+      startTime: new Date().toISOString(),
+      summary: 'Power grid anomaly detected',
+      description: 'Electrical infrastructure monitoring alert',
+      affectedSystems: ['power-grid-001'],
+      responders: ['team-alpha'],
+      timeline: [],
+      evidence: []
+    }
+  ];
+
   useEffect(() => {
     // Simulate map loading
     const timer = setTimeout(() => setIsLoading(false), 1000);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    console.log('LiveMap received incidents:', incidents.length, incidents);
+  }, [incidents]);
 
   const toggleLayer = (layerId: string) => {
     setLayers(prev => prev.map(layer => 
@@ -137,9 +225,9 @@ export function LiveMap({ incidents }: { incidents: Incident[] }) {
     ));
   };
 
-  const visibleIncidents = incidents.filter(() => 
-    layers.find(l => l.id === 'incidents')?.visible
-  );
+  const visibleIncidents = layers.find(l => l.id === 'incidents')?.visible
+    ? displayIncidents
+    : [];
 
   if (isLoading) {
     return (
@@ -155,7 +243,7 @@ export function LiveMap({ incidents }: { incidents: Incident[] }) {
 
   return (
     <MapErrorBoundary>
-      <div className="h-full flex flex-col">
+      <div className="h-full flex flex-col" style={{ minHeight: '400px' }}>
         {/* Header */}
         <div className="border-b border-accent pb-3 mb-4">
           <div className="flex items-center justify-between">
@@ -171,17 +259,103 @@ export function LiveMap({ incidents }: { incidents: Incident[] }) {
         </div>
 
         {/* Map Container */}
-        <div className="flex-1 relative bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg overflow-hidden">
-        {/* Simulated Map Background */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="w-full h-full bg-gradient-to-br from-blue-900/30 to-green-900/30"></div>
-          {/* Grid overlay to simulate map tiles */}
-          <div className="absolute inset-0 opacity-10">
+        <motion.div
+          className="flex-1 relative bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg overflow-hidden border border-slate-600"
+          style={{ minHeight: '350px' }}
+          animate={{
+            boxShadow: [
+              '0 0 20px rgba(59, 130, 246, 0.3)',
+              '0 0 30px rgba(16, 185, 129, 0.3)',
+              '0 0 20px rgba(59, 130, 246, 0.3)'
+            ]
+          }}
+          transition={{
+            duration: 6,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        >
+        {/* Enhanced Map Background */}
+        <div className="absolute inset-0">
+          {/* Base gradient */}
+          <div className="w-full h-full bg-gradient-to-br from-blue-900 to-green-900 opacity-60"></div>
+
+          {/* Animated grid overlay to simulate map tiles */}
+          <div className="absolute inset-0 opacity-60">
             {Array.from({ length: 20 }).map((_, i) => (
-              <div key={i} className="absolute border-t border-accent" style={{ top: `${i * 5}%`, width: '100%' }} />
+              <motion.div
+                key={`h-${i}`}
+                className="absolute border-t-2 border-blue-400"
+                style={{ top: `${i * 5}%`, width: '100%' }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: [0, 0.8, 0] }}
+                transition={{ duration: 4, delay: i * 0.1, repeat: Infinity }}
+              />
             ))}
             {Array.from({ length: 20 }).map((_, i) => (
-              <div key={i} className="absolute border-l border-accent" style={{ left: `${i * 5}%`, height: '100%' }} />
+              <motion.div
+                key={`v-${i}`}
+                className="absolute border-l-2 border-green-400"
+                style={{ left: `${i * 5}%`, height: '100%' }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: [0, 0.8, 0] }}
+                transition={{ duration: 4, delay: i * 0.15, repeat: Infinity }}
+              />
+            ))}
+          </div>
+
+          {/* Simulated city blocks and roads */}
+          <div className="absolute inset-0 opacity-70">
+            {/* Major roads */}
+            <div className="absolute top-1/4 left-0 w-full h-1 bg-yellow-400"></div>
+            <div className="absolute top-3/4 left-0 w-full h-1 bg-yellow-400"></div>
+            <div className="absolute left-1/4 top-0 w-1 h-full bg-yellow-400"></div>
+            <div className="absolute left-3/4 top-0 w-1 h-full bg-yellow-400"></div>
+
+            {/* City blocks */}
+            {Array.from({ length: 12 }).map((_, i) => (
+              <motion.div
+                key={`block-${i}`}
+                className="absolute bg-slate-600 rounded"
+                style={{
+                  left: `${15 + (i % 4) * 20}%`,
+                  top: `${20 + Math.floor(i / 4) * 25}%`,
+                  width: '12%',
+                  height: '15%',
+                }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: [0, 0.6, 0] }}
+                transition={{
+                  duration: 6,
+                  delay: i * 0.3,
+                  repeat: Infinity
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Data flow visualization */}
+          <div className="absolute inset-0 opacity-80">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <motion.div
+                key={`flow-${i}`}
+                className="absolute w-2 h-2 bg-cyan-400 rounded-full"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 100}%`,
+                }}
+                animate={{
+                  x: [0, Math.random() * 200 - 100],
+                  y: [0, Math.random() * 200 - 100],
+                  opacity: [0, 1, 0],
+                  scale: [0, 1.5, 0],
+                }}
+                transition={{
+                  duration: 3 + Math.random() * 2,
+                  repeat: Infinity,
+                  delay: Math.random() * 2,
+                }}
+              />
             ))}
           </div>
         </div>
@@ -189,14 +363,30 @@ export function LiveMap({ incidents }: { incidents: Incident[] }) {
         {/* City Features Simulation */}
         <div className="absolute inset-0">
           {/* Major roads */}
-          <div className="absolute top-1/2 left-0 w-full h-0.5 bg-yellow/30 transform -rotate-12"></div>
-          <div className="absolute top-1/3 left-0 w-full h-0.5 bg-yellow/30 transform rotate-12"></div>
-          
+          <div className="absolute top-1/2 left-0 w-full h-1 bg-yellow-400 opacity-50 transform -rotate-12"></div>
+          <div className="absolute top-1/3 left-0 w-full h-1 bg-yellow-400 opacity-50 transform rotate-12"></div>
+
           {/* Harbor area */}
-          <div className="absolute bottom-0 right-0 w-1/3 h-1/4 bg-blue/20 rounded-tl-full"></div>
-          
+          <div className="absolute bottom-0 right-0 w-1/3 h-1/4 bg-blue-500 opacity-40 rounded-tl-full"></div>
+
           {/* Downtown core */}
-          <div className="absolute top-1/2 left-1/2 w-16 h-16 bg-white/10 rounded transform -translate-x-1/2 -translate-y-1/2"></div>
+          <motion.div
+            className="absolute top-1/2 left-1/2 w-16 h-16 bg-white opacity-30 rounded transform -translate-x-1/2 -translate-y-1/2"
+            animate={{
+              opacity: [0.3, 0.6, 0.3],
+              scale: [1, 1.1, 1]
+            }}
+            transition={{
+              duration: 4,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
+
+          {/* Additional city landmarks */}
+          <div className="absolute top-1/4 left-1/4 w-8 h-8 bg-purple-400 opacity-40 rounded-full"></div>
+          <div className="absolute top-3/4 left-3/4 w-6 h-6 bg-orange-400 opacity-40 rounded"></div>
+          <div className="absolute top-1/6 right-1/4 w-10 h-4 bg-red-400 opacity-30 rounded"></div>
         </div>
 
         {/* Incident Markers */}
@@ -244,7 +434,7 @@ export function LiveMap({ incidents }: { incidents: Incident[] }) {
             </div>
           </div>
         )}
-        </div>
+        </motion.div>
       </div>
     </MapErrorBoundary>
   );

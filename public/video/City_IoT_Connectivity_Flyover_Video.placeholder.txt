@@ -1,0 +1,9 @@
+# Placeholder for City_IoT_Connectivity_Flyover_Video.mp4
+# This file represents a video that would contain:
+# IoT network connectivity flyover animation
+# 
+# To replace with actual video:
+# 1. Place the real City_IoT_Connectivity_Flyover_Video.mp4 in the public/video/ directory
+# 2. Ensure it's in MP4 format with H.264 encoding
+# 3. Recommended resolution: 1920x1080 or higher
+# 4. Duration: 10-30 seconds for optimal loading
