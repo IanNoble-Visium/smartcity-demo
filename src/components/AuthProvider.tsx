@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import type { ReactNode } from 'react';
 import type { User, UserRole, Permission } from '../types';
 
@@ -129,16 +130,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error('Failed to parse stored user data:', error);
         localStorage.removeItem('trucontext_user');
       }
-    } else {
-      // Auto-login for demo purposes with admin user
-      const demoUser = mockUsers[0]; // Admin user
-      const userWithUpdatedLogin = {
-        ...demoUser,
-        lastLogin: new Date().toISOString()
-      };
-      setUser(userWithUpdatedLogin);
-      localStorage.setItem('trucontext_user', JSON.stringify(userWithUpdatedLogin));
     }
+    // Temporarily disable auto-login for testing
     setIsLoading(false);
   }, []);
 
@@ -261,12 +254,13 @@ export function ProtectedComponent({
   return <>{children}</>;
 }
 
-// Login form component
+// Enhanced Login form component with professional design and video background
 function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -284,94 +278,335 @@ function LoginForm() {
   };
 
   const demoUsers = [
-    { email: 'admin@trucontext.com', role: 'System Administrator' },
-    { email: 'operator@trucontext.com', role: 'Operations Manager' },
-    { email: 'analyst@trucontext.com', role: 'Data Analyst' },
-    { email: 'viewer@trucontext.com', role: 'Public Safety Viewer' }
+    { 
+      email: 'admin@trucontext.com', 
+      role: 'System Administrator',
+      icon: '👑',
+      description: 'Full system access and management capabilities'
+    },
+    { 
+      email: 'operator@trucontext.com', 
+      role: 'Operations Manager',
+      icon: '🎯',
+      description: 'Operations center management and incident response'
+    },
+    { 
+      email: 'analyst@trucontext.com', 
+      role: 'Data Analyst',
+      icon: '📊',
+      description: 'Analytics, reporting, and data visualization access'
+    },
+    { 
+      email: 'viewer@trucontext.com', 
+      role: 'Public Safety Viewer',
+      icon: '👁️',
+      description: 'Public safety monitoring and incident viewing'
+    }
   ];
 
+  const selectUser = (userEmail: string) => {
+    setEmail(userEmail);
+    setPassword('demo123');
+    setSelectedUser(userEmail);
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
-      <div className="max-w-md w-full mx-4">
-        <div className="bg-primary border border-accent rounded-lg p-8 shadow-2xl">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="text-2xl font-bold text-purple mb-2">TruContext</div>
-            <h1 className="text-xl font-semibold mb-2">Smart City Operations</h1>
-            <p className="text-sm text-secondary">Secure access to city management systems</p>
-          </div>
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Enhanced Video Background */}
+      <div className="absolute inset-0 z-0">
+        <video
+          className="w-full h-full object-cover"
+          autoPlay
+          loop
+          muted
+          playsInline
+          poster="/video/Smart_City_Sunrise_Video_Generation.mp4"
+        >
+          <source src="/video/Smart_City_Sunrise_Video_Generation.mp4" type="video/mp4" />
+          <source src="/video/Futuristic_NOC_Video_Ready.mp4" type="video/mp4" />
+          <source src="/video/Dynamic_City_Map_Video_Ready.mp4" type="video/mp4" />
+        </video>
+        
+        {/* Animated overlay gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900/90 via-blue-900/80 to-slate-800/90"></div>
+        
+        {/* Animated grid overlay */}
+        <div className="absolute inset-0 opacity-20">
+          {Array.from({ length: 20 }).map((_, i) => (
+            <motion.div
+              key={`grid-h-${i}`}
+              className="absolute border-t border-cyan-400/30"
+              style={{ top: `${i * 5}%`, width: '100%' }}
+              initial={{ opacity: 0, scaleX: 0 }}
+              animate={{ 
+                opacity: [0, 0.6, 0],
+                scaleX: [0, 1, 0]
+              }}
+              transition={{ 
+                duration: 4, 
+                delay: i * 0.1, 
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+          ))}
+          {Array.from({ length: 20 }).map((_, i) => (
+            <motion.div
+              key={`grid-v-${i}`}
+              className="absolute border-l border-green-400/30"
+              style={{ left: `${i * 5}%`, height: '100%' }}
+              initial={{ opacity: 0, scaleY: 0 }}
+              animate={{ 
+                opacity: [0, 0.6, 0],
+                scaleY: [0, 1, 0]
+              }}
+              transition={{ 
+                duration: 4, 
+                delay: i * 0.15, 
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+          ))}
+        </div>
 
-          {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium mb-2">
-                Email Address
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 bg-tertiary border border-accent rounded-md focus:outline-none focus:ring-2 focus:ring-purple focus:border-transparent"
-                placeholder="Enter your email"
-                required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium mb-2">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 bg-tertiary border border-accent rounded-md focus:outline-none focus:ring-2 focus:ring-purple focus:border-transparent"
-                placeholder="Enter your password"
-                required
-              />
-            </div>
-
-            {error && (
-              <div className="bg-critical/20 border border-critical text-critical px-4 py-3 rounded-md text-sm">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full btn btn-primary py-3 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? 'Signing In...' : 'Sign In'}
-            </button>
-          </form>
-
-          {/* Demo Users */}
-          <div className="mt-8 pt-6 border-t border-accent">
-            <h3 className="text-sm font-medium mb-3 text-center">Demo Users</h3>
-            <div className="space-y-2">
-              {demoUsers.map(user => (
-                <button
-                  key={user.email}
-                  onClick={() => {
-                    setEmail(user.email);
-                    setPassword('demo123');
-                  }}
-                  className="w-full text-left px-3 py-2 bg-tertiary hover:bg-accent rounded-md transition-colors"
-                >
-                  <div className="font-medium text-sm">{user.email}</div>
-                  <div className="text-xs text-secondary">{user.role}</div>
-                </button>
-              ))}
-            </div>
-            <p className="text-xs text-center text-muted mt-3">
-              Password: <code className="bg-tertiary px-1 rounded">demo123</code>
-            </p>
-          </div>
+        {/* Floating particles */}
+        <div className="absolute inset-0">
+          {Array.from({ length: 15 }).map((_, i) => (
+            <motion.div
+              key={`particle-${i}`}
+              className="absolute w-2 h-2 bg-cyan-400/60 rounded-full"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+              }}
+              animate={{
+                x: [0, Math.random() * 200 - 100],
+                y: [0, Math.random() * 200 - 100],
+                opacity: [0, 1, 0],
+                scale: [0, 1.5, 0],
+              }}
+              transition={{
+                duration: 6 + Math.random() * 4,
+                repeat: Infinity,
+                delay: Math.random() * 3,
+                ease: "easeInOut"
+              }}
+            />
+          ))}
         </div>
       </div>
+
+      {/* Main Content */}
+      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
+        <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
+          
+          {/* Left Side - Branding and Info */}
+          <motion.div 
+            className="text-center lg:text-left space-y-6"
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            {/* Logo and Title */}
+            <div className="space-y-4">
+              <motion.div 
+                className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-full border border-cyan-500/30 backdrop-blur-md"
+                animate={{
+                  boxShadow: [
+                    '0 0 20px rgba(6, 182, 212, 0.3)',
+                    '0 0 40px rgba(6, 182, 212, 0.6)',
+                    '0 0 20px rgba(6, 182, 212, 0.3)'
+                  ]
+                }}
+                transition={{ duration: 4, repeat: Infinity }}
+              >
+                <span className="text-3xl">🏙️</span>
+                <div className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+                  TruContext
+                </div>
+              </motion.div>
+              
+              <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight">
+                Smart City
+                <span className="block bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+                  Operations
+                </span>
+              </h1>
+              
+              <p className="text-xl text-slate-300 max-w-lg">
+                Secure access to city management systems with real-time monitoring, 
+                AI-powered analytics, and comprehensive incident response capabilities.
+              </p>
+            </div>
+
+            {/* Feature highlights */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg">
+              {[
+                { icon: '🛡️', title: 'Secure Access', desc: 'Enterprise-grade security' },
+                { icon: '📊', title: 'Real-time Data', desc: 'Live city monitoring' },
+                { icon: '🤖', title: 'AI Analytics', desc: 'Intelligent insights' },
+                { icon: '🚨', title: 'Incident Response', desc: 'Rapid emergency handling' }
+              ].map((feature, index) => (
+                <motion.div
+                  key={feature.title}
+                  className="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/10 backdrop-blur-sm"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
+                >
+                  <span className="text-2xl">{feature.icon}</span>
+                  <div>
+                    <div className="font-semibold text-white text-sm">{feature.title}</div>
+                    <div className="text-xs text-slate-400">{feature.desc}</div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Right Side - Login Form */}
+          <motion.div 
+            className="w-full max-w-md mx-auto"
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+          >
+            <div className="bg-slate-900/90 backdrop-blur-xl border border-cyan-500/30 rounded-2xl p-8 shadow-2xl">
+              {/* Form Header */}
+              <div className="text-center mb-8">
+                <motion.div 
+                  className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4"
+                  animate={{
+                    boxShadow: [
+                      '0 0 20px rgba(6, 182, 212, 0.5)',
+                      '0 0 30px rgba(6, 182, 212, 0.8)',
+                      '0 0 20px rgba(6, 182, 212, 0.5)'
+                    ]
+                  }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                >
+                  <span className="text-2xl">🔐</span>
+                </motion.div>
+                <h2 className="text-2xl font-bold text-white mb-2">Welcome Back</h2>
+                <p className="text-slate-400 text-sm">Sign in to access the command center</p>
+              </div>
+
+              {/* Login Form */}
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
+                      Email Address
+                    </label>
+                    <input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-white placeholder-slate-400 transition-all duration-200"
+                      placeholder="Enter your email"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
+                      Password
+                    </label>
+                    <input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-white placeholder-slate-400 transition-all duration-200"
+                      placeholder="Enter your password"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {error && (
+                  <motion.div 
+                    className="bg-red-500/20 border border-red-500/50 text-red-300 px-4 py-3 rounded-lg text-sm"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    {error}
+                  </motion.div>
+                )}
+
+                <motion.button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {isLoading ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      Signing In...
+                    </div>
+                  ) : (
+                    'Sign In'
+                  )}
+                </motion.button>
+              </form>
+
+              {/* Demo Users */}
+              <div className="mt-8 pt-6 border-t border-slate-700">
+                <h3 className="text-sm font-medium mb-4 text-center text-slate-300">Demo Access</h3>
+                <div className="grid grid-cols-1 gap-3">
+                  {demoUsers.map((user, index) => (
+                    <motion.button
+                      key={user.email}
+                      onClick={() => selectUser(user.email)}
+                      className={`text-left p-4 rounded-lg border transition-all duration-200 ${
+                        selectedUser === user.email
+                          ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300'
+                          : 'bg-slate-800/30 border-slate-600 hover:bg-slate-700/50 text-slate-300'
+                      }`}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{user.icon}</span>
+                        <div className="flex-1">
+                          <div className="font-medium text-sm">{user.email}</div>
+                          <div className="text-xs opacity-75">{user.role}</div>
+                          <div className="text-xs opacity-60 mt-1">{user.description}</div>
+                        </div>
+                      </div>
+                    </motion.button>
+                  ))}
+                </div>
+                <p className="text-xs text-center text-slate-500 mt-4">
+                  Password: <code className="bg-slate-800 px-2 py-1 rounded text-cyan-400">demo123</code>
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Bottom branding */}
+      <motion.div 
+        className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-center text-slate-400 text-xs"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1, delay: 1 }}
+      >
+        <div className="flex items-center gap-2">
+          <span>Powered by</span>
+          <span className="font-semibold text-cyan-400">Visium Technologies</span>
+          <span>•</span>
+          <span>TruContext Platform</span>
+        </div>
+      </motion.div>
     </div>
   );
 }

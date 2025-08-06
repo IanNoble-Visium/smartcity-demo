@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import "./index.css";
 import { ExecutiveKpis } from "./components/ExecutiveKpis";
-import { LiveMap } from "./components/LiveMap";
+import { EnhancedLiveMap } from "./components/EnhancedLiveMap";
 import { AlertsFeed } from "./components/AlertsFeed";
 import { EnergyPanel } from "./components/EnergyPanel";
 import { TopologyView } from "./components/TopologyView";
@@ -156,7 +156,7 @@ function Dashboard() {
                   </div>
                 </div>
                 <div className="card-content">
-                  <LiveMap incidents={incidents} />
+                  <EnhancedLiveMap incidents={incidents} />
                 </div>
               </div>
             </section>
