@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import "./index.css";
 import { ExecutiveKpis } from "./components/ExecutiveKpis";
 import { LiveMap } from "./components/LiveMap";
@@ -7,6 +7,10 @@ import { EnergyPanel } from "./components/EnergyPanel";
 import { TopologyView } from "./components/TopologyView";
 import { IncidentDetail } from "./components/IncidentDetail";
 import { Header } from "./components/Header";
+import { AdvancedAnalytics } from "./components/AdvancedAnalytics";
+import { AnomalyDetectionEngine } from "./components/AnomalyDetectionEngine";
+import { GeospatialTrackingSystem } from "./components/GeospatialTrackingSystem";
+import { ContextualVideoBackground } from "./components/VideoBackground";
 import { AuthProvider, withAuth, ProtectedComponent } from "./components/AuthProvider";
 import { useMockRealtime } from "./mock/useMockRealtime";
 import { useDataStore, useUIStore } from "./store";
@@ -15,6 +19,7 @@ function Dashboard() {
   const { metrics, alerts, incidents, topology } = useMockRealtime();
   const { updateMetrics, addAlert, addIncident, updateTopology } = useDataStore();
   const { addNotification } = useUIStore();
+  const [activeView, setActiveView] = useState<'dashboard' | 'analytics' | 'anomaly' | 'geospatial'>('dashboard');
 
   // Update global stores with real-time data
   useEffect(() => {
@@ -58,12 +63,55 @@ function Dashboard() {
     });
   }, [incidents, addNotification]);
 
+  // Navigation Component
+  const Navigation = () => (
+    <div className="bg-secondary border-b border-secondary mb-6">
+      <div className="flex items-center gap-1 p-2">
+        <button
+          className={`btn text-xs ${activeView === 'dashboard' ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={() => setActiveView('dashboard')}
+        >
+          Executive Dashboard
+        </button>
+        <button
+          className={`btn text-xs ${activeView === 'analytics' ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={() => setActiveView('analytics')}
+        >
+          Advanced Analytics
+        </button>
+        <button
+          className={`btn text-xs ${activeView === 'anomaly' ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={() => setActiveView('anomaly')}
+        >
+          AI/ML Detection
+        </button>
+        <button
+          className={`btn text-xs ${activeView === 'geospatial' ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={() => setActiveView('geospatial')}
+        >
+          Geospatial Tracking
+        </button>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-primary text-primary">
-      <Header />
+    <div className="min-h-screen bg-primary text-primary relative">
+      {/* Background Video for Executive Dashboard */}
+      {activeView === 'dashboard' && (
+        <ContextualVideoBackground
+          context="executive"
+          className="fixed inset-0 -z-10"
+          overlayOpacity={0.9}
+        />
+      )}
       
-      {/* Main Dashboard Grid */}
-      <main className="p-6">
+      <Header />
+      <Navigation />
+      
+      {/* Main Content */}
+      <main className="p-6 relative z-10">
+        {activeView === 'dashboard' && (
         <div className="grid grid-cols-12 gap-6">
           {/* Executive KPIs - Available to all authenticated users */}
           <section className="col-span-12">
@@ -205,6 +253,19 @@ function Dashboard() {
             </section>
           </ProtectedComponent>
         </div>
+        )}
+        
+        {activeView === 'analytics' && (
+          <AdvancedAnalytics />
+        )}
+        
+        {activeView === 'anomaly' && (
+          <AnomalyDetectionEngine />
+        )}
+        
+        {activeView === 'geospatial' && (
+          <GeospatialTrackingSystem />
+        )}
       </main>
     </div>
   );
