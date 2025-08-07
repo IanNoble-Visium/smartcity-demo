@@ -55,11 +55,11 @@ interface CollaborationTool {
 
 export function AdvancedIncidentManagement({ className = '' }: AdvancedIncidentManagementProps) {
   const [activeTab, setActiveTab] = useState<'workflows' | 'evidence' | 'collaboration' | 'analytics'>('workflows');
-  const { incidents, alerts, lastUpdated, isConnected } = useMockRealtime();
+  const { incidents, isConnected, lastUpdated } = useMockRealtime();
   
   // UI state for filtering/sorting and selection
   const [severityFilter, setSeverityFilter] = useState<('low' | 'medium' | 'high' | 'critical')[] | null>(null);
-  const [statusFilter, setStatusFilter] = useState<('reported' | 'investigating' | 'responding' | 'mitigating')[] | null>(null);
+  const [statusFilter] = useState<('reported' | 'investigating' | 'responding' | 'mitigating')[] | null>(null);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'time' | 'severity'>('time');
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
@@ -569,11 +569,13 @@ export function AdvancedIncidentManagement({ className = '' }: AdvancedIncidentM
   return (
     <div className={`advanced-incident-management h-full min-h-0 overflow-hidden flex flex-col ${className}`}>
       {/* Video Background */}
-      <ContextualVideoBackground
-        context="emergency_response"
-        className="absolute inset-0 -z-10"
-        overlayOpacity={0.6}
-      />
+      <div className="video-background-container">
+        <ContextualVideoBackground
+          context="emergency_response"
+          className="absolute inset-0"
+          overlayOpacity={0.6}
+        />
+      </div>
 
       {/* Header */}
       <div className="relative z-10 flex items-center justify-between p-2 pb-3">

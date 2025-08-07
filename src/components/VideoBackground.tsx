@@ -32,10 +32,17 @@ const VideoBackground = memo(function VideoBackground({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [lastSrc, setLastSrc] = useState<string | null>(null);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
+
+    // Guard against redundant setup when the same src is applied repeatedly
+    if (lastSrc === videoSrc && isLoaded && !hasError) {
+      return;
+    }
+    setLastSrc(videoSrc);
 
     console.log('VideoBackground: Setting up video element for:', videoSrc);
 
@@ -84,7 +91,7 @@ const VideoBackground = memo(function VideoBackground({
       video.removeEventListener('play', handlePlay);
       video.removeEventListener('pause', handlePause);
     };
-  }, [videoSrc]);
+  }, [videoSrc, lastSrc, isLoaded, hasError]);
 
   return (
     <div className={`relative overflow-hidden ${className}`}>
@@ -323,7 +330,7 @@ export const ContextualVideoBackground = memo(function ContextualVideoBackground
     if (!placeholderVideoSrc) {
       generatePlaceholder();
     }
-  }, [context, placeholderVideoSrc]); // Removed generateVideoForContext to prevent circular dependency
+  }, [context]); // do not depend on placeholderVideoSrc to avoid loops
 
   return (
     <VideoBackground
