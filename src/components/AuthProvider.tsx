@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import type { ReactNode } from 'react';
 import type { User, UserRole, Permission } from '../types';
