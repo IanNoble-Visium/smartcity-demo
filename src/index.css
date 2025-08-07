@@ -81,6 +81,8 @@ body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Layout Utilities */
@@ -921,6 +923,11 @@ body {
   flex-direction: column;
 }
 
+/* Single-viewport layout for Incident Management */
+.advanced-incident-management {
+  height: 100%;
+}
+
 .advanced-analytics .card {
   transition: height 0.3s ease-in-out;
   overflow: hidden;
@@ -984,4 +991,40 @@ body {
   .advanced-analytics .lg\\:grid-cols-2 {
     grid-template-columns: 1fr;
   }
+}
+
+/* Cesium map layering fixes */
+/*
+ Ensure a predictable stacking context for the Cesium map and any React UI overlays.
+ The Cesium canvas and widget container stay at z-index 0, while overlays use
+ higher z-index values. Using isolation: isolate guarantees our z-index rules are
+ not affected by outside ancestors that might create unexpected stacking contexts.
+*/
+.cesium-root {
+  position: relative;
+  isolation: isolate; /* new stacking context */
+}
+
+.cesium-map-container {
+  position: absolute;
+  inset: 0;
+  z-index: 0; /* map below overlays */
+}
+
+/* Force Cesium internals to remain behind custom overlays */
+.cesium-root .cesium-widget,
+.cesium-root .cesium-widget canvas {
+  z-index: 0 !important;
+}
+
+/* Shared class for any UI overlay that should appear above the map */
+.cesium-overlay {
+  z-index: 10;
+}
+
+/* Controls sidebar defaults when used next to the Cesium map */
+.cesium-controls-sidebar {
+  position: relative;
+  z-index: 20; /* above map */
+  max-height: 100%;
 }

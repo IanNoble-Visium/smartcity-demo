@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ContextualVideoBackground } from './VideoBackground';
 import type { Evidence } from '../types';
+import { useMockRealtime } from '../mock/useMockRealtime';
 
 interface AdvancedIncidentManagementProps {
   className?: string;
@@ -54,6 +55,29 @@ interface CollaborationTool {
 
 export function AdvancedIncidentManagement({ className = '' }: AdvancedIncidentManagementProps) {
   const [activeTab, setActiveTab] = useState<'workflows' | 'evidence' | 'collaboration' | 'analytics'>('workflows');
+  const { incidents, alerts, lastUpdated, isConnected } = useMockRealtime();
+  
+  // UI state for filtering/sorting and selection
+  const [severityFilter, setSeverityFilter] = useState<('low' | 'medium' | 'high' | 'critical')[] | null>(null);
+  const [statusFilter, setStatusFilter] = useState<('reported' | 'investigating' | 'responding' | 'mitigating')[] | null>(null);
+  const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState<'time' | 'severity'>('time');
+  const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState<string | null>(null);
+  
+  // Mount animation/load state (prevents perceived refresh loop by stabilizing initial render)
+  useEffect(() => {
+    let timeoutId: number | undefined = undefined as any;
+    try {
+      setIsLoading(true);
+      timeoutId = window.setTimeout(() => setIsLoading(false), 500);
+    } catch (e: any) {
+      setHasError(e?.message || 'Failed to initialize');
+      setIsLoading(false);
+    }
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   // Mock incident workflows
   const incidentWorkflows = useMemo((): IncidentWorkflow[] => [
@@ -223,9 +247,46 @@ export function AdvancedIncidentManagement({ className = '' }: AdvancedIncidentM
     }
   ], []);
 
+  // Derived incident list with filters/sorting; memoized to avoid unnecessary re-renders
+  const filteredIncidents = useMemo(() => {
+    try {
+      const base = incidents || [];
+      let result = base;
+      if (severityFilter && severityFilter.length) {
+        result = result.filter(i => severityFilter.includes(i.severity as any));
+      }
+      if (statusFilter && statusFilter.length) {
+        result = result.filter(i => statusFilter.includes(i.status as any));
+      }
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        result = result.filter(i => i.summary.toLowerCase().includes(q) || i.type.toLowerCase().includes(q));
+      }
+      if (sortBy === 'severity') {
+        const rank: Record<string, number> = { low: 0, medium: 1, high: 2, critical: 3 };
+        result = [...result].sort((a, b) => (rank[b.severity] - rank[a.severity]));
+      } else {
+        result = [...result].sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
+      }
+      return result;
+    } catch (e) {
+      setHasError('Failed to process incidents');
+      return [];
+    }
+  }, [incidents, severityFilter, statusFilter, search, sortBy]);
+
+  // Ensure a selected incident stays valid
+  useEffect(() => {
+    if (selectedIncidentId && !filteredIncidents.some(i => i.id === selectedIncidentId)) {
+      setSelectedIncidentId(filteredIncidents[0]?.id || null);
+    } else if (!selectedIncidentId && filteredIncidents.length) {
+      setSelectedIncidentId(filteredIncidents[0].id);
+    }
+  }, [filteredIncidents, selectedIncidentId]);
+
   // Workflow Timeline Component
   const WorkflowTimeline = ({ workflow }: { workflow: IncidentWorkflow }) => (
-    <div className="card">
+    <div className="card h-full min-h-0 overflow-auto">
       <div className="card-header">
         <h3 className="card-title">{workflow.name}</h3>
         <div className="flex items-center gap-2">
@@ -313,7 +374,7 @@ export function AdvancedIncidentManagement({ className = '' }: AdvancedIncidentM
 
   // Evidence Management Component
   const EvidenceManagement = () => (
-    <div className="card">
+    <div className="card h-full min-h-0 overflow-auto">
       <div className="card-header">
         <h3 className="card-title">Evidence Chain of Custody</h3>
         <div className="flex items-center gap-2">
@@ -373,7 +434,7 @@ export function AdvancedIncidentManagement({ className = '' }: AdvancedIncidentM
 
   // Collaboration Tools Component
   const CollaborationTools = () => (
-    <div className="card">
+    <div className="card h-full min-h-0 overflow-auto">
       <div className="card-header">
         <h3 className="card-title">Cross-Department Collaboration</h3>
         <span className="text-xs text-muted">{collaborationTools.filter(t => t.status === 'active').length} active sessions</span>
@@ -431,7 +492,7 @@ export function AdvancedIncidentManagement({ className = '' }: AdvancedIncidentM
     };
 
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full min-h-0">
         <div className="card">
           <div className="card-header">
             <h3 className="card-title">Workflow Performance</h3>
@@ -506,7 +567,7 @@ export function AdvancedIncidentManagement({ className = '' }: AdvancedIncidentM
   };
 
   return (
-    <div className={`advanced-incident-management ${className}`}>
+    <div className={`advanced-incident-management h-full min-h-0 overflow-hidden flex flex-col ${className}`}>
       {/* Video Background */}
       <ContextualVideoBackground
         context="emergency_response"
@@ -515,7 +576,7 @@ export function AdvancedIncidentManagement({ className = '' }: AdvancedIncidentM
       />
 
       {/* Header */}
-      <div className="relative z-10 flex items-center justify-between mb-6">
+      <div className="relative z-10 flex items-center justify-between p-2 pb-3">
         <div>
           <h2 className="text-2xl font-bold text-primary">Advanced Incident Management Workflows</h2>
           <p className="text-muted">Multi-stage response protocols, evidence management, and cross-department collaboration</p>
@@ -531,8 +592,23 @@ export function AdvancedIncidentManagement({ className = '' }: AdvancedIncidentM
         </div>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="relative z-10 bg-secondary border border-secondary rounded-lg p-1 mb-6 inline-flex">
+      {/* Status + Filters Row */}
+      <div className="relative z-10 flex items-center justify-between px-2 pb-2">
+        <div className="flex items-center gap-3 text-xs">
+          <span className={`px-2 py-1 rounded ${isConnected ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}`}>{isConnected ? 'LIVE' : 'OFFLINE'}</span>
+          <span className="text-muted">Last updated: {new Date(lastUpdated).toLocaleTimeString()}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search incidents" className="px-2 py-1 text-xs rounded bg-secondary border border-secondary" />
+          <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="px-2 py-1 text-xs rounded bg-secondary border border-secondary">
+            <option value="time">Sort: Time</option>
+            <option value="severity">Sort: Severity</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="relative z-10 bg-secondary border border-secondary rounded-lg p-1 mx-2 mb-2 inline-flex self-start">
         {(['workflows', 'evidence', 'collaboration', 'analytics'] as const).map((tab) => (
           <button
             key={tab}
@@ -546,19 +622,76 @@ export function AdvancedIncidentManagement({ className = '' }: AdvancedIncidentM
         ))}
       </div>
 
-      {/* Content based on active tab */}
-      <div className="relative z-10">
-        {activeTab === 'workflows' && (
-          <div className="space-y-6">
-            {incidentWorkflows.map((workflow) => (
-              <WorkflowTimeline key={workflow.id} workflow={workflow} />
-            ))}
+      {/* Content grid - single viewport, no outer scroll */}
+      <div className="relative z-10 grid grid-cols-12 gap-3 p-2 flex-1 min-h-0 overflow-hidden">
+        {/* Left: Workflows/Analytics content with internal scroll */}
+        <div className="col-span-8 min-h-0 overflow-hidden">
+          {isLoading && (
+            <div className="card h-full flex items-center justify-center">
+              <div className="text-muted text-sm">Loading Incident Management...</div>
+            </div>
+          )}
+          {!isLoading && hasError && (
+            <div className="card h-full flex items-center justify-center">
+              <div className="text-rose-300 text-sm">{hasError}</div>
+            </div>
+          )}
+          {!isLoading && !hasError && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="h-full min-h-0 overflow-hidden">
+              {activeTab === 'workflows' && (
+                <div className="h-full min-h-0 overflow-auto space-y-4 pr-1">
+                  {incidentWorkflows.map((workflow) => (
+                    <WorkflowTimeline key={workflow.id} workflow={workflow} />
+                  ))}
+                </div>
+              )}
+              {activeTab === 'evidence' && <EvidenceManagement />}
+              {activeTab === 'collaboration' && <CollaborationTools />}
+              {activeTab === 'analytics' && <IncidentAnalytics />}
+            </motion.div>
+          )}
+        </div>
+
+        {/* Right: Live incidents panel */}
+        <div className="col-span-4 min-h-0 overflow-hidden">
+          <div className="card h-full min-h-0 flex flex-col">
+            <div className="card-header">
+              <h3 className="card-title">Live Incidents</h3>
+              <div className="flex items-center gap-2">
+                <button className="btn btn-ghost text-xs" onClick={() => setSeverityFilter(null)}>Clear</button>
+                <select className="px-2 py-1 text-xs rounded bg-secondary border border-secondary" onChange={(e) => setSeverityFilter(e.target.value ? [e.target.value as any] : null)}>
+                  <option value="">All Severities</option>
+                  <option value="critical">Critical</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+              </div>
+            </div>
+            <div className="card-content flex-1 min-h-0 overflow-auto">
+              {filteredIncidents.map((i) => (
+                <motion.div key={i.id} className={`p-3 rounded-lg mb-2 cursor-pointer border ${selectedIncidentId === i.id ? 'border-primary bg-secondary' : 'border-secondary bg-secondary'}`} onClick={() => setSelectedIncidentId(i.id)} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+                  <div className="flex items-center justify-between">
+                    <div className="font-medium text-sm">{i.summary}</div>
+                    <span className={`text-xs px-2 py-1 rounded capitalize ${i.severity === 'critical' ? 'bg-rose-500/20 text-rose-300' : i.severity === 'high' ? 'bg-amber-500/20 text-amber-300' : i.severity === 'medium' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-blue-500/20 text-blue-300'}`}>{i.severity}</span>
+                  </div>
+                  <div className="text-xs text-muted">{i.type.replace('_',' ')} • {new Date(i.startTime).toLocaleTimeString()}</div>
+                  {selectedIncidentId === i.id && (
+                    <div className="mt-2 flex gap-2">
+                      <button className="btn btn-primary text-xs">Acknowledge</button>
+                      <button className="btn btn-ghost text-xs">Assign</button>
+                      <button className="btn btn-ghost text-xs">Escalate</button>
+                      <button className="btn btn-ghost text-xs">Resolve</button>
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+              {filteredIncidents.length === 0 && (
+                <div className="text-xs text-muted">No incidents match current filters.</div>
+              )}
+            </div>
           </div>
-        )}
-        
-        {activeTab === 'evidence' && <EvidenceManagement />}
-        {activeTab === 'collaboration' && <CollaborationTools />}
-        {activeTab === 'analytics' && <IncidentAnalytics />}
+        </div>
       </div>
     </div>
   );

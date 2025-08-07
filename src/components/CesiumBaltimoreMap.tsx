@@ -103,10 +103,14 @@ export function CesiumBaltimoreMap({ incidents, className = '' }: CesiumBaltimor
               stencil: false,
               antialias: true,
               premultipliedAlpha: true,
-              preserveDrawingBuffer: false,
-              failIfMajorPerformanceCaveat: false
+              preserveDrawingBuffer: true, // Preserve context
+              failIfMajorPerformanceCaveat: false,
+              powerPreference: 'high-performance'
             }
-          }
+          },
+          // Additional stability options
+          scene3DOnly: true,
+          orderIndependentTranslucency: false
         });
         
         console.log('Cesium viewer created successfully');
@@ -116,14 +120,29 @@ export function CesiumBaltimoreMap({ incidents, className = '' }: CesiumBaltimor
         const canvas = scene.canvas;
         
         canvas.addEventListener('webglcontextlost', (event: Event) => {
-          console.warn('WebGL context lost, preventing default behavior');
+          console.warn('🚨 WebGL context lost, preventing default behavior');
           event.preventDefault();
+          setIsLoading(true); // Show loading overlay during recovery
         });
         
         canvas.addEventListener('webglcontextrestored', () => {
-          console.log('WebGL context restored, reinitializing...');
-          // The viewer should automatically handle context restoration
+          console.log('✅ WebGL context restored, reinitializing...');
+          setIsLoading(false);
+          // Force a render to refresh the scene
+          viewer.scene.requestRender();
         });
+        
+        // Add container visibility and size checks
+        const containerRect = cesiumContainerRef.current!.getBoundingClientRect();
+        console.log('Cesium container dimensions:', {
+          width: containerRect.width,
+          height: containerRect.height,
+          visible: containerRect.width > 0 && containerRect.height > 0
+        });
+        
+        if (containerRect.width === 0 || containerRect.height === 0) {
+          console.warn('⚠️ Cesium container has zero dimensions, this may cause rendering issues');
+        }
         
         // Set high-quality terrain and imagery using Ion services
         console.log('Setting up high-quality terrain and imagery...');
@@ -224,6 +243,24 @@ export function CesiumBaltimoreMap({ incidents, className = '' }: CesiumBaltimor
         viewer.scene.fog.density = 0.0002;
         viewer.scene.fog.screenSpaceErrorFactor = 2.0;
 
+        // Add resize observer to handle container size changes
+        const resizeObserver = new ResizeObserver((entries) => {
+          for (const entry of entries) {
+            console.log('Cesium container resized:', {
+              width: entry.contentRect.width,
+              height: entry.contentRect.height
+            });
+            // Force Cesium to resize
+            viewer.resize();
+            viewer.scene.requestRender();
+          }
+        });
+        
+        resizeObserver.observe(cesiumContainerRef.current!);
+        
+        // Store resize observer for cleanup
+        (viewer as any)._resizeObserver = resizeObserver;
+        
         console.log('Cesium viewer initialization completed successfully!');
         setIsLoading(false);
       } catch (error) {
@@ -258,8 +295,24 @@ export function CesiumBaltimoreMap({ incidents, className = '' }: CesiumBaltimor
 
     return () => {
       if (viewerRef.current) {
+        console.log('🧹 Cleaning up Cesium viewer and WebGL context');
+        
+        // Remove WebGL context event listeners
+        const canvas = viewerRef.current.scene.canvas;
+        canvas.removeEventListener('webglcontextlost', () => {});
+        canvas.removeEventListener('webglcontextrestored', () => {});
+        
+        // Destroy the viewer
+        // Clean up resize observer if it exists
+        if ((viewerRef.current as any)._resizeObserver) {
+          (viewerRef.current as any)._resizeObserver.disconnect();
+        }
+        
+        // Destroy the viewer
         viewerRef.current.destroy();
         viewerRef.current = null;
+        
+        console.log('✅ Cesium viewer cleanup completed');
       }
     };
   }, [cesiumLoaded]);
@@ -370,211 +423,174 @@ export function CesiumBaltimoreMap({ incidents, className = '' }: CesiumBaltimor
 
 
   return (
-    <div className={`relative h-full ${className}`}>
-      {/* Cesium Container */}
-      <div 
-        ref={cesiumContainerRef} 
-        className="w-full h-full"
-        style={{ background: '#1e293b' }}
-      />
+    <div className={`cesium-root relative h-full w-full min-h-0 overflow-hidden flex ${className}`} style={{ position: 'relative' }}>
+      {/* Map column */}
+      <div className="relative flex-1 min-w-0 h-full">
+        {/* Cesium Container */}
+        <div 
+          ref={cesiumContainerRef} 
+          className="cesium-map-container absolute inset-0 w-full h-full"
+          style={{ 
+            background: '#1e293b', 
+            zIndex: 0,
+            minHeight: '400px',
+            minWidth: '400px',
+            display: 'block',
+            visibility: 'visible'
+          }}
+        />
 
-      {/* Loading Overlay */}
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 z-50">
-          <motion.div 
-            className="text-center text-cyan-300"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-          >
+        {/* Loading Overlay (only over the map area) */}
+        {isLoading && (
+          <div className="cesium-overlay absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 z-50">
             <motion.div 
-              className="text-6xl mb-4"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              className="text-center text-cyan-300"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
             >
-              🌍
+              <motion.div 
+                className="text-6xl mb-4"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              >
+                🌍
+              </motion.div>
+              <motion.p 
+                className="text-xl font-semibold"
+                animate={{ opacity: [1, 0.5, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              >
+                Loading Baltimore City Model...
+              </motion.p>
+              <p className="text-sm mt-2 text-cyan-400">Initializing photorealistic 3D visualization</p>
+              <motion.div 
+                className="mt-4 flex justify-center gap-1"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+              >
+                {[0, 1, 2].map(i => (
+                  <motion.div
+                    key={i}
+                    className="w-3 h-3 bg-cyan-400 rounded-full"
+                    animate={{ 
+                      scale: [1, 1.2, 1],
+                      opacity: [0.5, 1, 0.5]
+                    }}
+                    transition={{ 
+                      duration: 1.5, 
+                      repeat: Infinity,
+                      delay: i * 0.2
+                    }}
+                  />
+                ))}
+              </motion.div>
             </motion.div>
-            <motion.p 
-              className="text-xl font-semibold"
-              animate={{ opacity: [1, 0.5, 1] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-            >
-              Loading Baltimore City Model...
-            </motion.p>
-            <p className="text-sm mt-2 text-cyan-400">Initializing photorealistic 3D visualization</p>
-            <motion.div 
-              className="mt-4 flex justify-center gap-1"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-            >
-              {[0, 1, 2].map(i => (
-                <motion.div
-                  key={i}
-                  className="w-3 h-3 bg-cyan-400 rounded-full"
-                  animate={{ 
-                    scale: [1, 1.2, 1],
-                    opacity: [0.5, 1, 0.5]
-                  }}
-                  transition={{ 
-                    duration: 1.5, 
-                    repeat: Infinity,
-                    delay: i * 0.2
-                  }}
-                />
-              ))}
-            </motion.div>
-          </motion.div>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
-      {/* Mouse Controls Guide - Top Left */}
-      <motion.div
-        className="absolute top-4 left-4 bg-slate-900/95 backdrop-blur-md rounded-xl border border-cyan-500/30 shadow-2xl"
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5 }}
-        style={{ zIndex: 9999, maxWidth: '280px' }}
-      >
-        <div className="p-4">
-          <h4 className="font-semibold text-sm text-cyan-300 mb-3 flex items-center gap-2">
-            <span className="text-cyan-400">🖱️</span>
-            Mouse Controls
-          </h4>
-          <div className="space-y-1 text-xs text-slate-300">
-            <div className="flex justify-between">
-              <span className="text-slate-400">Left Click + Drag:</span>
-              <span className="text-cyan-300">Rotate View</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">Right Click + Drag:</span>
-              <span className="text-cyan-300">Pan Map</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">Mouse Wheel:</span>
-              <span className="text-cyan-300">Zoom In/Out</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">Middle Click + Drag:</span>
-              <span className="text-cyan-300">Tilt View</span>
-            </div>
+      {/* Controls sidebar (no overlap with map) */}
+      <aside className="cesium-controls-sidebar w-80 max-w-xs h-full bg-slate-900/80 backdrop-blur-md border-l border-slate-700/50 p-4 overflow-y-auto">
+        {/* Status Indicator */}
+        <div className="mb-4 rounded-xl p-3 border border-green-500/30 bg-slate-900/80">
+          <div className="flex items-center gap-2 text-sm">
+            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+            <span className="text-green-300 font-medium">LIVE</span>
+            <span className="text-slate-400">|</span>
+            <span className="text-slate-300">{incidents.length} Incidents</span>
           </div>
         </div>
-      </motion.div>
 
-      {/* View Controls */}
-      <motion.div
-        className="absolute bottom-4 right-4 bg-slate-900/95 backdrop-blur-md rounded-xl border border-cyan-500/30 shadow-2xl"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        style={{ zIndex: 9999 }}
-      >
-        <div className="p-4">
-          <h4 className="font-semibold text-sm text-cyan-300 mb-3 flex items-center gap-2">
-            <span className="text-cyan-400">🎮</span>
-            View Controls
-          </h4>
-          <div className="flex flex-col gap-2">
-            <motion.button
-              className="px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/50 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2"
-              onClick={resetView}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <span>🎯</span>
-              Reset to Baltimore
-            </motion.button>
-            <div className="text-xs text-slate-400 mt-1">
-              <div className="flex justify-between">
-                <span>Active Incidents:</span>
-                <span className="text-cyan-300">{incidents.length}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Visible Layers:</span>
-                <span className="text-cyan-300">{layers.filter(l => l.visible).length}/{layers.length}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Status Indicator */}
-      <motion.div
-        className="absolute top-4 right-4 bg-slate-900/80 backdrop-blur-md rounded-xl p-3 border border-green-500/30"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-        style={{ zIndex: 9999 }}
-      >
-        <div className="flex items-center gap-2 text-sm">
-          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-          <span className="text-green-300 font-medium">LIVE</span>
-          <span className="text-slate-400">|</span>
-          <span className="text-slate-300">{incidents.length} Incidents</span>
-        </div>
-      </motion.div>
-
-      {/* Comprehensive Control Panel */}
-      <motion.div
-        className="absolute top-4 left-4 bg-slate-900/95 backdrop-blur-md rounded-xl border border-cyan-500/30 shadow-2xl max-w-sm"
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-        style={{ zIndex: 9999 }}
-      >
-        <div className="p-4">
-          {/* Mouse Controls Guide */}
-          <div className="mb-4">
-            <h4 className="font-semibold text-sm text-cyan-300 mb-2 flex items-center gap-2">
+        {/* Mouse Controls */}
+        <div className="mb-4 rounded-xl border border-cyan-500/30 bg-slate-900/95 shadow-2xl">
+          <div className="p-4">
+            <h4 className="font-semibold text-sm text-cyan-300 mb-3 flex items-center gap-2">
               <span className="text-cyan-400">🖱️</span>
               Mouse Controls
             </h4>
-            <div className="text-xs text-slate-400 space-y-1">
+            <div className="space-y-1 text-xs text-slate-300">
               <div className="flex justify-between">
-                <span>Left Click + Drag:</span>
-                <span className="text-cyan-300">Rotate</span>
+                <span className="text-slate-400">Left Click + Drag:</span>
+                <span className="text-cyan-300">Rotate View</span>
               </div>
               <div className="flex justify-between">
-                <span>Right Click + Drag:</span>
-                <span className="text-cyan-300">Pan</span>
+                <span className="text-slate-400">Right Click + Drag:</span>
+                <span className="text-cyan-300">Pan Map</span>
               </div>
               <div className="flex justify-between">
-                <span>Mouse Wheel:</span>
-                <span className="text-cyan-300">Zoom</span>
+                <span className="text-slate-400">Mouse Wheel:</span>
+                <span className="text-cyan-300">Zoom In/Out</span>
               </div>
               <div className="flex justify-between">
-                <span>Middle Click + Drag:</span>
-                <span className="text-cyan-300">Tilt</span>
+                <span className="text-slate-400">Middle Click + Drag:</span>
+                <span className="text-cyan-300">Tilt View</span>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Incident Layers */}
-          <div className="mb-4">
-            <h4 className="font-semibold text-sm text-cyan-300 mb-2 flex items-center gap-2">
-              <span className="text-cyan-400">🚨</span>
+        {/* View Controls */}
+        <div className="mb-4 rounded-xl border border-cyan-500/30 bg-slate-900/95 shadow-2xl">
+          <div className="p-4">
+            <h4 className="font-semibold text-sm text-cyan-300 mb-3 flex items-center gap-2">
+              <span className="text-cyan-400">🎮</span>
+              View Controls
+            </h4>
+            <div className="flex flex-col gap-2">
+              <motion.button
+                className="px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/50 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2"
+                onClick={resetView}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <span>🎯</span>
+                Reset to Baltimore
+              </motion.button>
+              <div className="text-xs text-slate-400 mt-1">
+                <div className="flex justify-between">
+                  <span>Active Incidents:</span>
+                  <span className="text-cyan-300">{incidents.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Visible Layers:</span>
+                  <span className="text-cyan-300">{layers.filter(l => l.visible).length}/{layers.length}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Incident Layers Panel */}
+        <div className="mb-4 rounded-xl border border-red-500/30 bg-slate-900/95 shadow-2xl">
+          <div className="p-4">
+            <h4 className="font-semibold text-sm text-red-300 mb-3 flex items-center gap-2">
+              <span className="text-red-400">🚨</span>
               Incident Layers
             </h4>
             <div className="space-y-2">
               {layers.map((layer) => (
                 <motion.div
                   key={layer.id}
-                  className="flex items-center justify-between p-2 bg-slate-800/50 rounded-lg border border-slate-700/50"
-                  whileHover={{ backgroundColor: 'rgba(30, 41, 59, 0.8)' }}
+                  className="flex items-center justify-between p-2 bg-slate-800/50 rounded-lg border border-slate-700/50 hover:bg-slate-700/50 transition-all duration-200"
+                  whileHover={{ scale: 1.02 }}
                 >
                   <div className="flex items-center gap-2">
-                    <div 
-                      className={`w-3 h-3 rounded-full ${
-                        layer.visible ? 'bg-green-400' : 'bg-slate-600'
-                      }`}
+                    <div
+                      className="w-3 h-3 rounded-full border-2"
+                      style={{
+                        backgroundColor: layer.visible ? layer.color : 'transparent',
+                        borderColor: layer.color,
+                        boxShadow: layer.visible ? `0 0 8px ${layer.color}60` : 'none'
+                      }}
                     />
-                    <span className="text-xs text-slate-300">{layer.name}</span>
+                    <span className="text-xs text-slate-300 font-medium">{layer.name}</span>
                   </div>
                   <motion.button
-                    className={`px-2 py-1 rounded text-xs font-medium transition-all duration-200 ${
-                      layer.visible 
-                        ? 'bg-green-500/20 text-green-300 border border-green-500/50' 
+                    className={`px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
+                      layer.visible
+                        ? 'bg-green-500/20 text-green-300 border border-green-500/50'
                         : 'bg-slate-600/20 text-slate-400 border border-slate-600/50'
                     }`}
                     onClick={() => toggleLayer(layer.id)}
@@ -587,42 +603,44 @@ export function CesiumBaltimoreMap({ incidents, className = '' }: CesiumBaltimor
               ))}
             </div>
           </div>
+        </div>
 
-          {/* Building Types Legend */}
-          <div>
-            <h4 className="font-semibold text-sm text-cyan-300 mb-2 flex items-center gap-2">
-              <span className="text-cyan-400">🏢</span>
+        {/* Building Types Legend */}
+        <div className="rounded-xl border border-yellow-500/30 bg-slate-900/95 shadow-2xl">
+          <div className="p-4">
+            <h4 className="font-semibold text-sm text-yellow-300 mb-3 flex items-center gap-2">
+              <span className="text-yellow-400">🏢</span>
               Building Types
             </h4>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                <div className="w-3 h-3 bg-red-400 rounded-full"></div>
                 <span className="text-slate-300">Hospitals</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <div className="w-3 h-3 bg-teal-400 rounded-full"></div>
                 <span className="text-slate-300">Schools</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
                 <span className="text-slate-300">Religious</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                <div className="w-3 h-3 bg-green-400 rounded-full"></div>
                 <span className="text-slate-300">Commercial</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
                 <span className="text-slate-300">Industrial</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                <div className="w-3 h-3 bg-purple-400 rounded-full"></div>
                 <span className="text-slate-300">Residential</span>
               </div>
             </div>
           </div>
         </div>
-      </motion.div>
+      </aside>
     </div>
   );
 }

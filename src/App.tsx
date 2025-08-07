@@ -113,7 +113,7 @@ function Dashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-primary text-primary relative">
+    <div className="min-h-screen bg-primary text-primary relative flex flex-col">
       {/* Background Video for Executive Dashboard */}
       {activeView === 'dashboard' && (
         <ContextualVideoBackground
@@ -127,7 +127,7 @@ function Dashboard() {
       <Navigation />
       
       {/* Main Content */}
-      <main className="relative z-10">
+      <main className="relative z-10 flex-1 min-h-0">
         {activeView === 'dashboard' && (
           <OptimizedExecutiveDashboard
             metrics={metrics}
@@ -158,7 +158,7 @@ function Dashboard() {
         )}
         
         {activeView === 'cesium' && (
-          <div className="h-screen">
+          <div className="h-full min-h-0">
             <CesiumBaltimoreMap incidents={incidents} />
           </div>
         )}
