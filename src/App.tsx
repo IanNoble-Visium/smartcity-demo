@@ -1,11 +1,5 @@
 import { useEffect, useState } from 'react';
 import "./index.css";
-import { ExecutiveKpis } from "./components/ExecutiveKpis";
-import { EnhancedLiveMap } from "./components/EnhancedLiveMap";
-import { AlertsFeed } from "./components/AlertsFeed";
-import { EnergyPanel } from "./components/EnergyPanel";
-import { TopologyView } from "./components/TopologyView";
-import { IncidentDetail } from "./components/IncidentDetail";
 import { Header } from "./components/Header";
 import { AdvancedAnalytics } from "./components/AdvancedAnalytics";
 import { AnomalyDetectionEngine } from "./components/AnomalyDetectionEngine";
@@ -15,7 +9,7 @@ import { AdvancedIncidentManagement } from "./components/AdvancedIncidentManagem
 import { OptimizedExecutiveDashboard } from "./components/OptimizedExecutiveDashboard";
 import { ContextualVideoBackground } from "./components/VideoBackground";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import { AuthProvider, withAuth, ProtectedComponent } from "./components/AuthProvider";
+import { AuthProvider, withAuth } from "./components/AuthProvider";
 import { useMockRealtime } from "./mock/useMockRealtime";
 import { useDataStore, useUIStore } from "./store";
 

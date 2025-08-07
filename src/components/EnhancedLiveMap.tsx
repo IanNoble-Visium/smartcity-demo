@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import type { Incident } from '../types';
 import { MapErrorBoundary } from './ErrorBoundary';
 
@@ -11,22 +11,7 @@ interface MapLayer {
   color: string;
 }
 
-interface MapViewport {
-  latitude: number;
-  longitude: number;
-  zoom: number;
-  bearing: number;
-  pitch: number;
-}
 
-interface CameraState {
-  x: number;
-  y: number;
-  z: number;
-  rotationX: number;
-  rotationY: number;
-  rotationZ: number;
-}
 
 const defaultLayers: MapLayer[] = [
   { id: 'incidents', name: 'Active Incidents', visible: true, type: 'incidents', color: '#EF4444' },
@@ -36,369 +21,17 @@ const defaultLayers: MapLayer[] = [
   { id: 'security', name: 'Security Cameras', visible: true, type: 'security', color: '#3B82F6' }
 ];
 
-const baltimoreViewport: MapViewport = {
-  latitude: 39.2904,
-  longitude: -76.6122,
-  zoom: 11,
-  bearing: 0,
-  pitch: 45
-};
-
-const defaultCameraState: CameraState = {
-  x: 0,
-  y: 0,
-  z: 0,
-  rotationX: 0,
-  rotationY: 0,
-  rotationZ: 0
-};
-
-function IncidentMarker({ incident, onClick, cameraState }: { 
-  incident: Incident; 
-  onClick: () => void;
-  cameraState: CameraState;
-}) {
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'critical': return { bg: 'bg-red-500', border: 'border-red-500', ring: 'border-red-400', glow: 'shadow-red-500/50' };
-      case 'high': return { bg: 'bg-orange-500', border: 'border-orange-500', ring: 'border-orange-400', glow: 'shadow-orange-500/50' };
-      case 'medium': return { bg: 'bg-yellow-500', border: 'border-yellow-500', ring: 'border-yellow-400', glow: 'shadow-yellow-500/50' };
-      default: return { bg: 'bg-blue-500', border: 'border-blue-500', ring: 'border-blue-400', glow: 'shadow-blue-500/50' };
-    }
-  };
-
-  const getIncidentIcon = (type: string) => {
-    switch (type) {
-      case 'fire': return '🔥';
-      case 'medical': return '🚑';
-      case 'traffic': return '🚗';
-      case 'security': return '🚨';
-      case 'infrastructure': return '⚡';
-      case 'environmental': return '🌿';
-      default: return '⚠️';
-    }
-  };
-
-  const colors = getSeverityColor(incident.severity);
-
-  // Calculate position within the map bounds (normalize to 20-80% of container)
-  // Use a simpler approach that ensures incidents are visible
-  const baseX = 30 + (Math.abs(incident.location.longitude + 76.6122) % 1) * 40;
-  const baseY = 30 + (Math.abs(incident.location.latitude - 39.2904) % 1) * 40;
-
-  const adjustedX = Math.max(10, Math.min(90, baseX + cameraState.x * 0.05));
-  const adjustedY = Math.max(10, Math.min(90, baseY + cameraState.y * 0.05));
 
 
 
-  return (
-    <motion.div
-      className="absolute cursor-pointer z-20"
-      style={{
-        left: `${adjustedX}%`,
-        top: `${adjustedY}%`,
-        transform: `translate(-50%, -50%) perspective(1000px) rotateX(${cameraState.rotationX}deg) rotateY(${cameraState.rotationY}deg)`
-      }}
-      onClick={onClick}
-      whileHover={{ scale: 1.3, z: 10 }}
-      whileTap={{ scale: 0.9 }}
-      initial={{ scale: 0, opacity: 0, y: -20 }}
-      animate={{ scale: 1, opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, type: "spring" }}
-    >
-      {/* Enhanced pulsing ring for critical incidents */}
-      {incident.severity === 'critical' && (
-        <>
-          <motion.div
-            className={`absolute w-12 h-12 rounded-full border-2 ${colors.ring}`}
-            style={{ transform: 'translate(-50%, -50%)' }}
-            animate={{ 
-              scale: [1, 3, 1], 
-              opacity: [0.8, 0, 0.8],
-              rotate: [0, 360]
-            }}
-            transition={{ duration: 2, repeat: Infinity }}
-          />
-          <motion.div
-            className={`absolute w-8 h-8 rounded-full border ${colors.ring}`}
-            style={{ transform: 'translate(-50%, -50%)' }}
-            animate={{ 
-              scale: [1, 2.5, 1], 
-              opacity: [0.6, 0, 0.6]
-            }}
-            transition={{ duration: 1.5, repeat: Infinity, delay: 0.5 }}
-          />
-        </>
-      )}
 
-      {/* Main marker with enhanced 3D effect */}
-      <motion.div
-        className={`w-6 h-6 rounded-full border-2 shadow-lg ${colors.bg} ${colors.border} ${colors.glow} flex items-center justify-center relative`}
-        style={{ 
-          transform: 'translate(-50%, -50%)',
-          boxShadow: `0 0 20px ${colors.glow.includes('red') ? '#ef4444' : colors.glow.includes('orange') ? '#f59e0b' : colors.glow.includes('yellow') ? '#eab308' : '#3b82f6'}40`
-        }}
-        animate={{
-          boxShadow: [
-            `0 0 20px ${colors.glow.includes('red') ? '#ef4444' : colors.glow.includes('orange') ? '#f59e0b' : colors.glow.includes('yellow') ? '#eab308' : '#3b82f6'}40`,
-            `0 0 30px ${colors.glow.includes('red') ? '#ef4444' : colors.glow.includes('orange') ? '#f59e0b' : colors.glow.includes('yellow') ? '#eab308' : '#3b82f6'}60`,
-            `0 0 20px ${colors.glow.includes('red') ? '#ef4444' : colors.glow.includes('orange') ? '#f59e0b' : colors.glow.includes('yellow') ? '#eab308' : '#3b82f6'}40`
-          ]
-        }}
-        transition={{ duration: 2, repeat: Infinity }}
-        title={`${incident.type}: ${incident.description}`}
-      >
-        {/* Incident type icon */}
-        <span className="text-xs relative z-10">
-          {getIncidentIcon(incident.type)}
-        </span>
 
-        {/* 3D depth indicator */}
-        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-transparent"></div>
-      </motion.div>
 
-      {/* Enhanced status indicator */}
-      <motion.div
-        className={`absolute w-3 h-3 rounded-full ${colors.bg} border border-white/50`}
-        style={{
-          transform: 'translate(-50%, -50%)',
-          left: '80%',
-          top: '20%'
-        }}
-        animate={{ 
-          opacity: [1, 0.3, 1],
-          scale: [1, 1.2, 1]
-        }}
-        transition={{ duration: 1.5, repeat: Infinity }}
-      />
 
-      {/* Data connection lines */}
-      <motion.div
-        className="absolute w-px h-8 bg-gradient-to-t from-cyan-400/60 to-transparent"
-        style={{
-          transform: 'translate(-50%, -100%)',
-          left: '50%',
-          top: '0%'
-        }}
-        animate={{
-          opacity: [0, 1, 0],
-          scaleY: [0, 1, 0]
-        }}
-        transition={{ duration: 2, repeat: Infinity, delay: Math.random() * 2 }}
-      />
-    </motion.div>
-  );
-}
-
-function LayerControl({ layers, onToggleLayer }: { layers: MapLayer[]; onToggleLayer: (id: string) => void }) {
-  return (
-    <motion.div
-      className="absolute top-2 left-2 bg-slate-900/95 backdrop-blur-md rounded-xl p-3 min-w-48 border border-cyan-500/30 z-10"
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.5 }}
-      style={{
-        boxShadow: '0 0 30px rgba(6, 182, 212, 0.3)'
-      }}
-    >
-      <h4 className="font-semibold mb-2 text-xs text-cyan-300 flex items-center gap-2">
-        <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></span>
-        Layers
-      </h4>
-      <div className="space-y-2">
-        {layers.map(layer => (
-          <motion.label
-            key={layer.id}
-            className="flex items-center gap-2 text-xs cursor-pointer hover:bg-cyan-500/10 p-1 rounded transition-all duration-200"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <input
-              type="checkbox"
-              checked={layer.visible}
-              onChange={() => onToggleLayer(layer.id)}
-              className="w-3 h-3 rounded border-cyan-500/50 bg-slate-800 text-cyan-400 focus:ring-cyan-400 focus:ring-1"
-            />
-            <motion.div
-              className="w-3 h-3 rounded-full border relative"
-              style={{
-                backgroundColor: layer.visible ? layer.color : 'transparent',
-                borderColor: layer.color,
-                boxShadow: layer.visible ? `0 0 8px ${layer.color}40` : 'none'
-              }}
-              animate={{
-                boxShadow: layer.visible ? [
-                  `0 0 8px ${layer.color}40`,
-                  `0 0 12px ${layer.color}60`,
-                  `0 0 8px ${layer.color}40`
-                ] : 'none'
-              }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              {layer.visible && (
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/30 to-transparent"></div>
-              )}
-            </motion.div>
-            <span className="text-slate-300 text-xs">{layer.name}</span>
-          </motion.label>
-        ))}
-      </div>
-    </motion.div>
-  );
-}
-
-function MapControls({ 
-  viewport, 
-  onViewportChange, 
-  cameraState, 
-  onCameraChange,
-  is3D,
-  onToggle3D 
-}: { 
-  viewport: MapViewport; 
-  onViewportChange: (viewport: MapViewport) => void;
-  cameraState: CameraState;
-  onCameraChange: (camera: CameraState) => void;
-  is3D: boolean;
-  onToggle3D: () => void;
-}) {
-  return (
-    <motion.div 
-      className="absolute bottom-4 right-4 flex flex-col gap-3"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.2 }}
-    >
-      {/* Zoom Controls */}
-      <div className="bg-slate-900/95 backdrop-blur-md rounded-xl p-3 border border-cyan-500/30">
-        <div className="flex flex-col gap-2">
-          <motion.button 
-            className="btn bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border-cyan-500/50 text-sm p-2 w-10 h-10 flex items-center justify-center"
-            onClick={() => onViewportChange({ ...viewport, zoom: Math.min(viewport.zoom + 1, 18) })}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            +
-          </motion.button>
-          <motion.button 
-            className="btn bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border-cyan-500/50 text-sm p-2 w-10 h-10 flex items-center justify-center"
-            onClick={() => onViewportChange({ ...viewport, zoom: Math.max(viewport.zoom - 1, 8) })}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            -
-          </motion.button>
-        </div>
-      </div>
-      
-      {/* 3D Toggle */}
-      <div className="bg-slate-900/95 backdrop-blur-md rounded-xl p-3 border border-cyan-500/30">
-        <motion.button 
-          className={`btn text-sm px-4 py-2 ${is3D ? 'bg-cyan-500 text-slate-900' : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50'}`}
-          onClick={onToggle3D}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          {is3D ? '3D' : '2D'}
-        </motion.button>
-      </div>
-
-      {/* Camera Controls (3D Mode) */}
-      {is3D && (
-        <motion.div 
-          className="bg-slate-900/95 backdrop-blur-md rounded-xl p-3 border border-cyan-500/30"
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          <div className="text-xs text-cyan-300 mb-2 text-center">Camera</div>
-          <div className="grid grid-cols-3 gap-1">
-            <motion.button 
-              className="btn bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-xs p-1 w-8 h-8"
-              onClick={() => onCameraChange({ ...cameraState, rotationY: cameraState.rotationY - 15 })}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              ↶
-            </motion.button>
-            <motion.button 
-              className="btn bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-xs p-1 w-8 h-8"
-              onClick={() => onCameraChange({ ...cameraState, rotationX: cameraState.rotationX - 15 })}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              ↑
-            </motion.button>
-            <motion.button 
-              className="btn bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-xs p-1 w-8 h-8"
-              onClick={() => onCameraChange({ ...cameraState, rotationY: cameraState.rotationY + 15 })}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              ↷
-            </motion.button>
-            <motion.button 
-              className="btn bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-xs p-1 w-8 h-8"
-              onClick={() => onCameraChange({ ...cameraState, y: cameraState.y - 10 })}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              ←
-            </motion.button>
-            <motion.button 
-              className="btn bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-xs p-1 w-8 h-8"
-              onClick={() => onCameraChange(defaultCameraState)}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              ⌂
-            </motion.button>
-            <motion.button 
-              className="btn bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-xs p-1 w-8 h-8"
-              onClick={() => onCameraChange({ ...cameraState, y: cameraState.y + 10 })}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              →
-            </motion.button>
-            <motion.button 
-              className="btn bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-xs p-1 w-8 h-8"
-              onClick={() => onCameraChange({ ...cameraState, z: cameraState.z - 10 })}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              -
-            </motion.button>
-            <motion.button 
-              className="btn bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-xs p-1 w-8 h-8"
-              onClick={() => onCameraChange({ ...cameraState, rotationX: cameraState.rotationX + 15 })}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              ↓
-            </motion.button>
-            <motion.button 
-              className="btn bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-xs p-1 w-8 h-8"
-              onClick={() => onCameraChange({ ...cameraState, z: cameraState.z + 10 })}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              +
-            </motion.button>
-          </div>
-        </motion.div>
-      )}
-    </motion.div>
-  );
-}
 
 export function EnhancedLiveMap({ incidents }: { incidents: Incident[] }) {
-  const [layers, setLayers] = useState<MapLayer[]>(defaultLayers);
-  const [viewport, setViewport] = useState<MapViewport>(baltimoreViewport);
-  const [cameraState, setCameraState] = useState<CameraState>(defaultCameraState);
-  const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
+  const [layers] = useState<MapLayer[]>(defaultLayers);
   const [isLoading, setIsLoading] = useState(true);
-  const [is3D, setIs3D] = useState(true);
   const mapRef = useRef<HTMLDivElement>(null);
 
   // Ensure we always have some incidents to display for demo purposes
@@ -464,22 +97,7 @@ export function EnhancedLiveMap({ incidents }: { incidents: Incident[] }) {
     console.log('Incidents layer visible:', layers.find(l => l.id === 'incidents')?.visible);
   }, [incidents.length, displayIncidents.length, visibleIncidents.length, layers]);
 
-  const toggleLayer = (layerId: string) => {
-    setLayers(prev => prev.map(layer =>
-      layer.id === layerId ? { ...layer, visible: !layer.visible } : layer
-    ));
-  };
 
-  const toggle3D = () => {
-    setIs3D(!is3D);
-    if (!is3D) {
-      // Smooth transition to 3D view
-      setCameraState({ ...defaultCameraState, rotationX: 15, rotationY: 5 });
-    } else {
-      // Reset to 2D view
-      setCameraState(defaultCameraState);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -700,7 +318,7 @@ export function EnhancedLiveMap({ incidents }: { incidents: Incident[] }) {
                   top: `${top}%`,
                   transform: 'translate(-50%, -50%)'
                 }}
-                onClick={() => setSelectedIncident(incident)}
+                onClick={() => console.log('Incident clicked:', incident.id)}
                 initial={{ scale: 0, opacity: 0, y: -20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, type: "spring", delay: index * 0.1 }}

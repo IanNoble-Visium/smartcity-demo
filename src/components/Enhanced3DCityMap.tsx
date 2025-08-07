@@ -188,10 +188,7 @@ function IncidentMarker3D({ incident, onClick, position }: IncidentMarker3DProps
         color="#ffffff"
         anchorX="center"
         anchorY="middle"
-        backgroundColor="#1e293b"
-        backgroundOpacity={0.8}
-        backgroundPadding={[0.1, 0.05]}
-        backgroundRadius={0.05}
+
       >
         {incident.type.replace('_', ' ').toUpperCase()}
       </Text>
@@ -282,7 +279,7 @@ function CityScene({ incidents, layers, onIncidentClick }: {
       ))}
       
       {/* Incident markers */}
-      {visibleIncidents.map((incident, index) => {
+      {visibleIncidents.map((incident) => {
         // Convert lat/lng to 3D position
         const x = (incident.location.longitude + 76.6122) * 100 - 5;
         const z = (incident.location.latitude - 39.2904) * 100 - 5;
@@ -482,7 +479,7 @@ export function Enhanced3DCityMap({ incidents }: { incidents: Incident[] }) {
     console.log('Toggling animation...');
   };
   
-  const visibleIncidents = layers.find(l => l.id === 'incidents')?.visible ? displayIncidents : [];
+
   
   if (isLoading) {
     return (

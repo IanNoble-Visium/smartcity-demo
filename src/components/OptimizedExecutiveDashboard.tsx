@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ExecutiveKpis } from './ExecutiveKpis';
 import { EnhancedLiveMap } from './EnhancedLiveMap';
@@ -7,13 +7,13 @@ import { AlertsFeed } from './AlertsFeed';
 import { EnergyPanel } from './EnergyPanel';
 import { TopologyView } from './TopologyView';
 import { IncidentDetail } from './IncidentDetail';
-import type { Metrics, Alert, Incident, Topology } from '../types';
+import type { Metrics, Alert, Incident } from '../types';
 
 interface OptimizedExecutiveDashboardProps {
   metrics: Metrics | null;
   alerts: Alert[];
   incidents: Incident[];
-  topology: Topology | null;
+  topology: any | null;
 }
 
 interface CollapsibleSectionProps {
@@ -104,7 +104,7 @@ function CompactKpiGrid({ metrics }: { metrics: Metrics | null }) {
       {kpiData.map((kpi, i) => (
         <div key={i} className="bg-slate-800/50 rounded p-2 text-center">
           <div className="text-xs text-slate-400 mb-1">{kpi.label}</div>
-          <div className={`text-lg font-bold ${statusColors[kpi.status].split(' ')[0]}`}>
+          <div className={`text-lg font-bold ${statusColors[kpi.status as keyof typeof statusColors].split(' ')[0]}`}>
             {kpi.value}<span className="text-xs ml-1">{kpi.unit}</span>
           </div>
         </div>
@@ -335,7 +335,7 @@ export function OptimizedExecutiveDashboard({
                               <span className="text-xs text-yellow-400 font-medium">#{incident.id}</span>
                               <span className="text-xs text-slate-400">{incident.severity}</span>
                             </div>
-                            <div className="text-sm text-white font-medium line-clamp-1">{incident.title}</div>
+                            <div className="text-sm text-white font-medium line-clamp-1">{incident.summary}</div>
                             <div className="text-xs text-slate-300 mt-1 line-clamp-2">{incident.description}</div>
                           </div>
                         ))}
