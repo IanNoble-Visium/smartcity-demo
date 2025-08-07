@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import type { ReactNode } from 'react';
 import type { User, UserRole, Permission } from '../types';
@@ -263,6 +263,18 @@ function LoginForm() {
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const { login } = useAuth();
 
+  // Manual play function for user interaction
+  const handleVideoClick = () => {
+    const video = document.querySelector('video') as HTMLVideoElement;
+    if (video) {
+      if (video.paused) {
+        video.play().catch(console.warn);
+      } else {
+        video.pause();
+      }
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -313,31 +325,64 @@ function LoginForm() {
   return (
     <div className="h-screen relative overflow-hidden">
       {/* Enhanced Full-Screen Video Background */}
-      <div className="video-background-container">
+      <div className="video-background-container" style={{ zIndex: -1 }} onClick={handleVideoClick}>
+        {/* Fallback gradient background */}
+        <div 
+          className="absolute inset-0" 
+          style={{
+            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #334155 50%, #1e293b 75%, #0f172a 100%)',
+            zIndex: -2
+          }}
+        />
+
+
         <video
-          className="video-background"
           autoPlay
           loop
           muted
           playsInline
-          poster="/video/Futuristic_NOC_Video_Ready.mp4"
+          preload="auto"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            zIndex: -1,
+            objectFit: 'cover',
+            opacity: 0.9
+          }}
+          onLoadedData={(e) => {
+            const video = e.target as HTMLVideoElement;
+            console.log('✅ Video loaded successfully:', video.src);
+            console.log('📐 Video dimensions:', video.videoWidth, 'x', video.videoHeight);
+            console.log('⏱️ Video duration:', video.duration, 'seconds');
+          }}
+          onCanPlay={() => console.log('🎬 Video can play')}
+          onPlay={() => console.log('▶️ Video started playing')}
+          onError={(e) => {
+            const video = e.target as HTMLVideoElement;
+            console.error('❌ Video error:', video.error);
+            console.error('🔗 Failed source:', video.currentSrc);
+          }}
+          onLoadStart={() => console.log('🔄 Video load started')}
         >
           <source src="/video/Futuristic_NOC_Video_Ready.mp4" type="video/mp4" />
-          <source src="/video/Futuristic_NOC_Video_Ready.mp4" type="video/mp4" />
           <source src="/video/Dynamic_City_Map_Video_Ready.mp4" type="video/mp4" />
+          <source src="/video/City_IoT_Connectivity_Flyover_Video.mp4" type="video/mp4" />
+          <source src="/video/Scene_transition_smart_202508060022_nfeaf.mp4" type="video/mp4" />
+          Your browser does not support the video tag.
         </video>
 
-        {/* Enhanced multi-layer overlay for maximum text readability */}
-        <div className="absolute inset-0 bg-slate-900/98"></div>
-        <div className="absolute inset-0 bg-black/80"></div>
 
-        {/* Additional gradient overlay for better text contrast */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900/95 via-slate-800/85 to-slate-900/95"></div>
 
-        {/* Final overlay for optimal readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-slate-900/90"></div>
+        {/* Light overlay for text readability while keeping video visible */}
+        <div className="absolute inset-0 bg-slate-900/10" style={{ zIndex: 1 }}></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900/15 via-transparent to-slate-900/15" style={{ zIndex: 2 }}></div>
 
       </div>
+
+
 
       {/* Main Content */}
       <div className="relative z-10 h-screen flex items-center justify-center p-4">
@@ -345,7 +390,7 @@ function LoginForm() {
 
           {/* Left Side - Compact Branding */}
           <motion.div
-            className="lg:col-span-2 text-center lg:text-left space-y-4 p-4 rounded-xl bg-slate-900/60 backdrop-blur-sm border border-white/10"
+            className="lg:col-span-2 text-center lg:text-left space-y-4 p-4 rounded-xl bg-slate-900/20 backdrop-blur-none border border-white/10"
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
@@ -410,8 +455,7 @@ function LoginForm() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
           >
-            <div className="bg-slate-900/99 backdrop-blur-xl border-2 border-cyan-400/60 rounded-xl p-6 shadow-2xl ring-2 ring-white/20"
-                 style={{ backgroundColor: 'rgba(15, 23, 42, 0.98)' }}>
+            <div className="bg-slate-900/45 backdrop-blur-sm border-2 border-cyan-400/60 rounded-xl p-6 shadow-2xl ring-2 ring-white/20">
               <div className="relative z-10">
                 {/* Compact Form Header */}
                 <div className="text-center mb-6">

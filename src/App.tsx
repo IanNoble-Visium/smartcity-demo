@@ -112,7 +112,7 @@ function Dashboard() {
         <ContextualVideoBackground
           context="executive"
           className="fixed inset-0 -z-10"
-          overlayOpacity={0.9}
+          overlayOpacity={0.6}
         />
       )}
       

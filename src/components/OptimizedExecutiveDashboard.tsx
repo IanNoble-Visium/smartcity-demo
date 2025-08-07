@@ -34,7 +34,7 @@ function CollapsibleSection({
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
   return (
-    <div className={`bg-slate-900/95 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden ${compact ? 'text-sm' : ''}`}>
+    <div className={`bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden ${compact ? 'text-sm' : ''}`}>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full px-4 py-3 flex items-center justify-between bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
@@ -155,7 +155,7 @@ export function OptimizedExecutiveDashboard({
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
       {/* Responsive Header */}
-      <div className="flex-shrink-0 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700/50 px-2 sm:px-4 py-2">
+      <div className="flex-shrink-0 bg-slate-900/70 backdrop-blur-sm border-b border-slate-700/50 px-2 sm:px-4 py-2">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-lg sm:text-xl font-bold text-white">Executive Dashboard</h1>
@@ -228,7 +228,7 @@ export function OptimizedExecutiveDashboard({
                 {/* Left Column - Map and KPIs */}
                 <div className="lg:col-span-8 col-span-1 flex flex-col gap-2 sm:gap-4 min-h-0">
                   {/* Compact KPIs */}
-                  <div className="bg-slate-900/95 backdrop-blur-sm border border-slate-700/50 rounded-lg p-2 sm:p-4 flex-shrink-0">
+                  <div className="bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg p-2 sm:p-4 flex-shrink-0">
                     <div className="flex items-center justify-between mb-3">
                       <h2 className="text-sm font-semibold text-white">Key Performance Indicators</h2>
                       <span className="status-indicator status-success text-xs">All Systems</span>
@@ -237,7 +237,7 @@ export function OptimizedExecutiveDashboard({
                   </div>
 
                   {/* Enhanced Live Map - Now takes more space and supports 3D */}
-                  <div className="flex-1 bg-slate-900/95 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden min-h-0" style={{ minHeight: '300px' }}>
+                  <div className="flex-1 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden min-h-0" style={{ minHeight: '300px' }}>
                     <div className="px-2 sm:px-4 py-2 sm:py-3 bg-slate-800/50 border-b border-slate-700/50 flex-shrink-0">
                       <div className="flex items-center justify-between">
                         <h2 className="text-sm font-semibold text-white flex items-center gap-2">

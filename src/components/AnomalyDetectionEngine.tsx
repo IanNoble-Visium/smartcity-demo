@@ -479,10 +479,10 @@ export function AnomalyDetectionEngine({ className = '' }: AnomalyDetectionEngin
   return (
     <div className={`anomaly-detection-engine ${className}`}>
       {/* Video Background */}
-      <ContextualVideoBackground 
+      <ContextualVideoBackground
         context="cybersecurity"
         className="absolute inset-0 -z-10"
-        overlayOpacity={0.8}
+        overlayOpacity={0.6}
       />
 
       {/* Header */}

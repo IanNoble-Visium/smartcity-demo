@@ -405,7 +405,7 @@ export function EnhancedLiveMap({ incidents }: { incidents: Incident[] }) {
 
                 {/* Incident label */}
                 <motion.div
-                  className="absolute top-12 left-1/2 transform -translate-x-1/2 bg-slate-900/95 backdrop-blur-sm rounded px-2 py-1 text-xs text-white border border-cyan-500/30"
+                  className="absolute top-12 left-1/2 transform -translate-x-1/2 bg-slate-900/70 backdrop-blur-sm rounded px-2 py-1 text-xs text-white border border-cyan-500/30"
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 + index * 0.1 }}
@@ -417,7 +417,7 @@ export function EnhancedLiveMap({ incidents }: { incidents: Incident[] }) {
           })}
 
           {/* Status Overlay */}
-          <div className="absolute bottom-2 left-2 bg-slate-900/95 backdrop-blur-md rounded-xl p-2 text-xs border border-cyan-500/30 z-10">
+          <div className="absolute bottom-2 left-2 bg-slate-900/70 backdrop-blur-md rounded-xl p-2 text-xs border border-cyan-500/30 z-10">
             <div className="flex items-center gap-2 text-cyan-300">
               <span className="flex items-center gap-1">
                 <span className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></span>

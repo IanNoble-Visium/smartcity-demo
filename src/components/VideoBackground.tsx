@@ -37,22 +37,52 @@ export function VideoBackground({
     const video = videoRef.current;
     if (!video) return;
 
+    console.log('VideoBackground: Setting up video element for:', videoSrc);
+
     const handleLoadedData = () => {
+      console.log('Video loaded successfully:', videoSrc);
       setIsLoaded(true);
       setHasError(false);
+
+      // Try to play the video
+      video.play().then(() => {
+        console.log('Video started playing successfully');
+      }).catch((error) => {
+        console.warn('Video autoplay failed:', error);
+        // This is normal for browsers with strict autoplay policies
+      });
     };
 
     const handleError = () => {
+      console.error('Video failed to load:', videoSrc);
       setHasError(true);
       setIsLoaded(false);
     };
 
+    const handleCanPlay = () => {
+      console.log('Video can play:', videoSrc);
+    };
+
+    const handlePlay = () => {
+      console.log('Video started playing:', videoSrc);
+    };
+
+    const handlePause = () => {
+      console.log('Video paused:', videoSrc);
+    };
+
     video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('error', handleError);
+    video.addEventListener('canplay', handleCanPlay);
+    video.addEventListener('play', handlePlay);
+    video.addEventListener('pause', handlePause);
 
     return () => {
       video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('error', handleError);
+      video.removeEventListener('canplay', handleCanPlay);
+      video.removeEventListener('play', handlePlay);
+      video.removeEventListener('pause', handlePause);
     };
   }, [videoSrc]);
 

@@ -324,7 +324,7 @@ function CityScene({ incidents, layers, onIncidentClick }: {
 function LayerControl({ layers, onToggleLayer }: { layers: MapLayer[]; onToggleLayer: (id: string) => void }) {
   return (
     <motion.div
-      className="absolute top-2 left-2 bg-slate-900/95 backdrop-blur-md rounded-xl p-3 min-w-48 border border-cyan-500/30 z-10"
+      className="absolute top-2 left-2 bg-slate-900/70 backdrop-blur-md rounded-xl p-3 min-w-48 border border-cyan-500/30 z-10"
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.5 }}
@@ -381,7 +381,7 @@ function ViewControls({ onResetView, onToggleAnimation }: {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.2 }}
     >
-      <div className="bg-slate-900/95 backdrop-blur-md rounded-xl p-2 border border-cyan-500/30">
+      <div className="bg-slate-900/70 backdrop-blur-md rounded-xl p-2 border border-cyan-500/30">
         <div className="flex flex-col gap-1">
           <motion.button
             className="btn bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border-cyan-500/50 text-xs px-3 py-1"
@@ -570,7 +570,7 @@ export function Enhanced3DCityMap({ incidents }: { incidents: Incident[] }) {
       <AnimatePresence>
         {selectedIncident && (
           <motion.div
-            className="absolute top-2 right-2 bg-slate-900/95 backdrop-blur-md rounded-xl p-3 max-w-xs border border-cyan-500/30 z-20"
+            className="absolute top-2 right-2 bg-slate-900/70 backdrop-blur-md rounded-xl p-3 max-w-xs border border-cyan-500/30 z-20"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
@@ -615,7 +615,7 @@ export function Enhanced3DCityMap({ incidents }: { incidents: Incident[] }) {
       </AnimatePresence>
       
       {/* Performance Status */}
-      <div className="absolute bottom-2 left-2 bg-slate-900/95 backdrop-blur-md rounded-xl p-2 text-xs border border-cyan-500/30 z-10">
+      <div className="absolute bottom-2 left-2 bg-slate-900/70 backdrop-blur-md rounded-xl p-2 text-xs border border-cyan-500/30 z-10">
         <div className="flex items-center gap-2 text-cyan-300">
           <span className="flex items-center gap-1">
             <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>

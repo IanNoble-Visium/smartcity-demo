@@ -518,10 +518,10 @@ export function ExternalSystemsIntegration({ className = '' }: ExternalSystemsIn
   return (
     <div className={`external-systems-integration ${className}`}>
       {/* Video Background */}
-      <ContextualVideoBackground 
+      <ContextualVideoBackground
         context="network"
         className="absolute inset-0 -z-10"
-        overlayOpacity={0.85}
+        overlayOpacity={0.6}
       />
 
       {/* Header */}

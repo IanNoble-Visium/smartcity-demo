@@ -508,10 +508,10 @@ export function AdvancedIncidentManagement({ className = '' }: AdvancedIncidentM
   return (
     <div className={`advanced-incident-management ${className}`}>
       {/* Video Background */}
-      <ContextualVideoBackground 
+      <ContextualVideoBackground
         context="emergency_response"
         className="absolute inset-0 -z-10"
-        overlayOpacity={0.85}
+        overlayOpacity={0.6}
       />
 
       {/* Header */}
