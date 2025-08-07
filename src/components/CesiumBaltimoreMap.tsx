@@ -428,131 +428,35 @@ export function CesiumBaltimoreMap({ incidents, className = '' }: CesiumBaltimor
         </div>
       )}
 
-      {/* Control Panel */}
+      {/* Mouse Controls Guide - Top Left */}
       <motion.div
-        className="absolute top-4 left-4 bg-slate-900/95 backdrop-blur-md rounded-xl border border-cyan-500/30 z-20 shadow-2xl"
+        className="absolute top-4 left-4 bg-slate-900/95 backdrop-blur-md rounded-xl border border-cyan-500/30 shadow-2xl"
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5 }}
-        style={{
-          boxShadow: '0 0 40px rgba(6, 182, 212, 0.4)',
-          maxWidth: '320px'
-        }}
+        style={{ zIndex: 9999, maxWidth: '280px' }}
       >
-        {/* Header */}
-        <div className="bg-gradient-to-r from-cyan-600/20 to-blue-600/20 p-4 rounded-t-xl border-b border-cyan-500/20">
-          <h3 className="font-bold text-lg text-cyan-300 flex items-center gap-2">
-            <span className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse"></span>
-            Baltimore 3D Control Center
-          </h3>
-          <p className="text-xs text-slate-400 mt-1">Interactive City Management Dashboard</p>
-        </div>
-
-        <div className="p-4 space-y-4">
-          {/* Mouse Controls Guide */}
-          <div>
-            <h4 className="font-semibold text-sm text-cyan-300 mb-2 flex items-center gap-2">
-              <span className="text-cyan-400">🖱️</span>
-              Mouse Controls
-            </h4>
-            <div className="space-y-1 text-xs text-slate-300">
-              <div className="flex justify-between">
-                <span className="text-slate-400">Left Click + Drag:</span>
-                <span className="text-cyan-300">Rotate View</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Right Click + Drag:</span>
-                <span className="text-cyan-300">Pan Map</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Mouse Wheel:</span>
-                <span className="text-cyan-300">Zoom In/Out</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Middle Click + Drag:</span>
-                <span className="text-cyan-300">Tilt View</span>
-              </div>
+        <div className="p-4">
+          <h4 className="font-semibold text-sm text-cyan-300 mb-3 flex items-center gap-2">
+            <span className="text-cyan-400">🖱️</span>
+            Mouse Controls
+          </h4>
+          <div className="space-y-1 text-xs text-slate-300">
+            <div className="flex justify-between">
+              <span className="text-slate-400">Left Click + Drag:</span>
+              <span className="text-cyan-300">Rotate View</span>
             </div>
-          </div>
-
-          {/* Incident Layers */}
-          <div>
-            <h4 className="font-semibold text-sm text-cyan-300 mb-2 flex items-center gap-2">
-              <span className="text-red-400">🚨</span>
-              Incident Layers
-            </h4>
-            <div className="space-y-2">
-              {layers.map(layer => (
-                <motion.label
-                  key={layer.id}
-                  className="flex items-center gap-3 text-sm cursor-pointer hover:bg-cyan-500/10 p-2 rounded-lg transition-all duration-200 group"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={layer.visible}
-                    onChange={() => toggleLayer(layer.id)}
-                    className="w-4 h-4 rounded border-cyan-500/50 bg-slate-800 text-cyan-400 focus:ring-cyan-400 focus:ring-1"
-                  />
-                  <motion.div
-                    className="w-4 h-4 rounded-full border-2 relative flex-shrink-0"
-                    style={{
-                      backgroundColor: layer.visible ? layer.color : 'transparent',
-                      borderColor: layer.color,
-                      boxShadow: layer.visible ? `0 0 12px ${layer.color}60` : 'none'
-                    }}
-                  >
-                    {layer.visible && (
-                      <motion.div 
-                        className="absolute inset-0 rounded-full bg-gradient-to-br from-white/40 to-transparent"
-                        animate={{ scale: [1, 1.1, 1] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      />
-                    )}
-                  </motion.div>
-                  <div className="flex-1">
-                    <span className="text-slate-200 font-medium">{layer.name}</span>
-                    <div className="text-xs text-slate-400 group-hover:text-slate-300 transition-colors">
-                      {layer.visible ? 'Visible on map' : 'Hidden from view'}
-                    </div>
-                  </div>
-                </motion.label>
-              ))}
+            <div className="flex justify-between">
+              <span className="text-slate-400">Right Click + Drag:</span>
+              <span className="text-cyan-300">Pan Map</span>
             </div>
-          </div>
-
-          {/* Legend */}
-          <div>
-            <h4 className="font-semibold text-sm text-cyan-300 mb-2 flex items-center gap-2">
-              <span className="text-yellow-400">🏢</span>
-              Building Types
-            </h4>
-            <div className="grid grid-cols-2 gap-1 text-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-red-400 rounded-full"></div>
-                <span className="text-slate-300">Hospitals</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-teal-400 rounded-full"></div>
-                <span className="text-slate-300">Schools</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
-                <span className="text-slate-300">Religious</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                <span className="text-slate-300">Commercial</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                <span className="text-slate-300">Industrial</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-purple-400 rounded-full"></div>
-                <span className="text-slate-300">Residential</span>
-              </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">Mouse Wheel:</span>
+              <span className="text-cyan-300">Zoom In/Out</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">Middle Click + Drag:</span>
+              <span className="text-cyan-300">Tilt View</span>
             </div>
           </div>
         </div>
