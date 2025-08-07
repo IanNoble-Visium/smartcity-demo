@@ -320,9 +320,9 @@ function LoginForm() {
           loop
           muted
           playsInline
-          poster="/video/Smart_City_Sunrise_Video_Generation.mp4"
+          poster="/video/Futuristic_NOC_Video_Ready.mp4"
         >
-          <source src="/video/Smart_City_Sunrise_Video_Generation.mp4" type="video/mp4" />
+          <source src="/video/Futuristic_NOC_Video_Ready.mp4" type="video/mp4" />
           <source src="/video/Futuristic_NOC_Video_Ready.mp4" type="video/mp4" />
           <source src="/video/Dynamic_City_Map_Video_Ready.mp4" type="video/mp4" />
         </video>

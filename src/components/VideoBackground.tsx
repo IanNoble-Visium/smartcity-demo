@@ -181,35 +181,35 @@ export function VideoBackground({
 
 // Video mapping for different dashboard sections with fallback configurations
 export const VIDEO_MAPPINGS = {
-  // Dashboard backgrounds
+  // Dashboard backgrounds - using only existing videos
   executive: '/video/Futuristic_NOC_Video_Ready.mp4',
-  analytics: '/video/Animated_dashboard_walkthrough_202508060020_.mp4',
-  map: '/video/Smart_City_Sunrise_Video_Generation.mp4',
-  energy: '/video/Overhead_animation_of_202508060022_488qw.mp4',
+  analytics: '/video/Dynamic_City_Map_Video_Ready.mp4', // fallback to existing video
+  map: '/video/Dynamic_City_Map_Video_Ready.mp4',
+  energy: '/video/City_IoT_Connectivity_Flyover_Video.mp4', // fallback to existing video
 
-  // Alert and incident videos
-  cybersecurity: '/video/Cyberattack_Visualization_and_Response.mp4',
-  emergency: '/video/Emergency_Response_Drone_and_Ambulance_Dispatch.mp4',
-  traffic: '/video/Smart_Traffic_Flow_Optimization_Timelapse.mp4',
+  // Alert and incident videos - using existing videos as fallbacks
+  cybersecurity: '/video/Scene_transition_smart_202508060022_nfeaf.mp4', // fallback to existing video
+  emergency: '/video/Scene_transition_smart_202508060022_nfeaf.mp4', // fallback to existing video
+  traffic: '/video/City_IoT_Connectivity_Flyover_Video.mp4', // fallback to existing video
 
-  // Infrastructure monitoring
+  // Infrastructure monitoring - using existing videos
   network: '/video/City_IoT_Connectivity_Flyover_Video.mp4',
-  infrastructure: '/video/3d_visualization_of_202508060022_v98bv.mp4',
-  environmental: '/video/Closeups_of_air_202508060021_eydg8.mp4',
+  infrastructure: '/video/Futuristic_NOC_Video_Ready.mp4', // fallback to existing video
+  environmental: '/video/City_IoT_Connectivity_Flyover_Video.mp4', // fallback to existing video
 
-  // Operations and management
-  operations: '/video/Splitscreen_city_operations_202508060021_o7.mp4',
-  control_room: '/video/Touchscreen_wall_in_202508060023_mcpqe.mp4',
-  citizen_services: '/video/Diverse_citizens_interacting_202508060021_66y.mp4',
+  // Operations and management - using existing videos as fallbacks
+  operations: '/video/Futuristic_NOC_Video_Ready.mp4', // fallback to existing video
+  control_room: '/video/Futuristic_NOC_Video_Ready.mp4', // fallback to existing video
+  citizen_services: '/video/Dynamic_City_Map_Video_Ready.mp4', // fallback to existing video
 
-  // Specialized views
-  transit: '/video/Smart_public_transit_202508060021_cdetx.mp4',
-  night_operations: '/video/Nighttime_cityscape_with_202508060021_arch5.mp4',
-  grid_monitoring: '/video/Real_Time_Grid_Strain_Dashboard.mp4',
+  // Specialized views - using existing videos
+  transit: '/video/City_IoT_Connectivity_Flyover_Video.mp4', // fallback to existing video
+  night_operations: '/video/Futuristic_NOC_Video_Ready.mp4', // fallback to existing video
+  grid_monitoring: '/video/Futuristic_NOC_Video_Ready.mp4', // fallback to existing video
   dynamic_mapping: '/video/Dynamic_City_Map_Video_Ready.mp4',
-  network_analysis: '/video/Graph_network_view_202508060022_1uief.mp4',
+  network_analysis: '/video/City_IoT_Connectivity_Flyover_Video.mp4', // fallback to existing video
   emergency_response: '/video/Scene_transition_smart_202508060022_nfeaf.mp4',
-  citizen_experience: '/video/Virtual_citizen_experience_202508060022_odh0.mp4'
+  citizen_experience: '/video/Dynamic_City_Map_Video_Ready.mp4' // fallback to existing video
 } as const;
 
 // Fallback gradients for different contexts
