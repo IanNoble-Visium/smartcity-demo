@@ -1,9 +1,32 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { viteStaticCopy } from 'vite-plugin-static-copy'
 
-// https://vite.dev/config/
+// https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    viteStaticCopy({
+      targets: [
+        {
+          src: 'node_modules/cesium/Build/Cesium/Workers',
+          dest: 'cesium'
+        },
+        {
+          src: 'node_modules/cesium/Build/Cesium/ThirdParty',
+          dest: 'cesium'
+        },
+        {
+          src: 'node_modules/cesium/Build/Cesium/Assets',
+          dest: 'cesium'
+        },
+        {
+          src: 'node_modules/cesium/Build/Cesium/Widgets',
+          dest: 'cesium'
+        }
+      ]
+    })
+  ],
   optimizeDeps: {
     include: [
       '@react-three/fiber',
@@ -11,11 +34,10 @@ export default defineConfig({
       'three',
       'three/examples/jsm/controls/OrbitControls',
       'three/examples/jsm/loaders/GLTFLoader',
-      'three/examples/jsm/utils/BufferGeometryUtils',
-      'cesium'
+      'three/examples/jsm/utils/BufferGeometryUtils'
     ],
-    exclude: [],
-    force: false,
+    exclude: ['cesium', 'mersenne-twister'],
+    force: true,
     esbuildOptions: {
       target: 'esnext'
     }
@@ -33,8 +55,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           'three': ['three'],
-          'react-three': ['@react-three/fiber', '@react-three/drei'],
-          'cesium': ['cesium']
+          'react-three': ['@react-three/fiber', '@react-three/drei']
         }
       }
     }
@@ -46,6 +67,11 @@ export default defineConfig({
   },
   define: {
     // Define Cesium base URL for assets
-    CESIUM_BASE_URL: JSON.stringify('/cesium/')
+    CESIUM_BASE_URL: JSON.stringify('/cesium/'),
+    // Fix global issues
+    global: 'globalThis'
+  },
+  ssr: {
+    noExternal: ['cesium']
   }
 })

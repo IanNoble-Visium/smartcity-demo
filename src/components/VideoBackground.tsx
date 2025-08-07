@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, memo } from 'react';
 import { motion } from 'framer-motion';
 import { useVideoGeneration } from './PlaceholderVideoGenerator';
 
@@ -16,7 +16,7 @@ interface VideoBackgroundProps {
   children?: React.ReactNode;
 }
 
-export function VideoBackground({
+const VideoBackground = memo(function VideoBackground({
   videoSrc,
   className = '',
   overlay = true,
@@ -60,7 +60,7 @@ export function VideoBackground({
     };
 
     const handleCanPlay = () => {
-      console.log('Video can play:', videoSrc);
+      // Video is ready to play
     };
 
     const handlePlay = () => {
@@ -133,48 +133,52 @@ export function VideoBackground({
                 <div className="w-full h-full bg-gradient-to-br from-blue-900/30 to-green-900/30"></div>
                 <div className="absolute inset-0 opacity-30">
                   {Array.from({ length: 20 }).map((_, i) => (
-                    <motion.div
+                    <div
                       key={`h-${i}`}
-                      className="absolute border-t border-blue-400/20"
-                      style={{ top: `${i * 5}%`, width: '100%' }}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: [0, 0.5, 0] }}
-                      transition={{ duration: 3, delay: i * 0.1, repeat: Infinity }}
+                      className="absolute border-t border-blue-400/20 w-full"
+                      style={{ top: `${i * 5}%` }}
                     />
                   ))}
                   {Array.from({ length: 20 }).map((_, i) => (
-                    <motion.div
+                    <div
                       key={`v-${i}`}
-                      className="absolute border-l border-green-400/20"
-                      style={{ left: `${i * 5}%`, height: '100%' }}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: [0, 0.5, 0] }}
-                      transition={{ duration: 3, delay: i * 0.15, repeat: Infinity }}
+                      className="absolute border-l border-green-400/20 h-full"
+                      style={{ left: `${i * 5}%` }}
                     />
                   ))}
                 </div>
 
                 {/* Floating particles */}
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <motion.div
-                    key={`particle-${i}`}
-                    className="absolute w-2 h-2 bg-blue-400/40 rounded-full"
-                    style={{
-                      left: `${Math.random() * 100}%`,
-                      top: `${Math.random() * 100}%`,
-                    }}
-                    animate={{
-                      x: [0, Math.random() * 100 - 50],
-                      y: [0, Math.random() * 100 - 50],
-                      opacity: [0, 1, 0],
-                    }}
-                    transition={{
-                      duration: 4 + Math.random() * 2,
-                      repeat: Infinity,
-                      delay: Math.random() * 2,
-                    }}
-                  />
-                ))}
+                {Array.from({ length: 8 }).map((_, i) => {
+                  const leftPos = Math.random() * 100;
+                  const topPos = Math.random() * 100;
+                  const xMove = Math.random() * 100 - 50;
+                  const yMove = Math.random() * 100 - 50;
+                  const duration = 4 + Math.random() * 2;
+                  const delay = Math.random() * 2;
+                  
+                  return (
+                    <motion.div
+                      key={`particle-${i}`}
+                      className="absolute w-2 h-2 bg-blue-400/40 rounded-full"
+                      initial={{
+                        left: `${leftPos}%`,
+                        top: `${topPos}%`,
+                        opacity: 0
+                      }}
+                      animate={{
+                        x: [0, xMove],
+                        y: [0, yMove],
+                        opacity: [0, 1, 0],
+                      }}
+                      transition={{
+                        duration,
+                        repeat: Infinity,
+                        delay,
+                      }}
+                    />
+                  );
+                })}
               </div>
             </div>
           )}
@@ -207,7 +211,9 @@ export function VideoBackground({
       )}
     </div>
   );
-}
+});
+
+export { VideoBackground };
 
 // Video mapping for different dashboard sections with fallback configurations
 export const VIDEO_MAPPINGS = {
@@ -268,14 +274,18 @@ export const FALLBACK_GRADIENTS = {
 
 export type VideoMappingKey = keyof typeof VIDEO_MAPPINGS;
 
-// Hook for contextual video selection
+// Hook for contextual video selection with stable references
 export function useContextualVideo(context: VideoMappingKey, fallback?: VideoMappingKey) {
-  const [currentVideo, setCurrentVideo] = useState<string>(VIDEO_MAPPINGS[context]);
-  
+  const [currentVideo, setCurrentVideo] = useState<string>(() =>
+    VIDEO_MAPPINGS[context] || (fallback ? VIDEO_MAPPINGS[fallback] : VIDEO_MAPPINGS.executive)
+  );
+
   useEffect(() => {
     const video = VIDEO_MAPPINGS[context] || (fallback ? VIDEO_MAPPINGS[fallback] : VIDEO_MAPPINGS.executive);
-    setCurrentVideo(video);
-  }, [context, fallback]);
+    if (video !== currentVideo) {
+      setCurrentVideo(video);
+    }
+  }, [context, fallback, currentVideo]);
 
   return currentVideo;
 }
@@ -286,7 +296,7 @@ interface ContextualVideoBackgroundProps extends Omit<VideoBackgroundProps, 'vid
   fallback?: VideoMappingKey;
 }
 
-export function ContextualVideoBackground({
+export const ContextualVideoBackground = memo(function ContextualVideoBackground({
   context,
   fallback = 'executive',
   ...props
@@ -301,7 +311,9 @@ export function ContextualVideoBackground({
     const generatePlaceholder = async () => {
       try {
         const placeholderUrl = await generateVideoForContext(context);
-        setPlaceholderVideoSrc(placeholderUrl);
+        if (placeholderUrl && placeholderUrl !== placeholderVideoSrc) {
+          setPlaceholderVideoSrc(placeholderUrl);
+        }
       } catch (error) {
         console.warn('Failed to generate placeholder video:', error);
       }
@@ -311,7 +323,7 @@ export function ContextualVideoBackground({
     if (!placeholderVideoSrc) {
       generatePlaceholder();
     }
-  }, [context, generateVideoForContext, placeholderVideoSrc]);
+  }, [context, placeholderVideoSrc]); // Removed generateVideoForContext to prevent circular dependency
 
   return (
     <VideoBackground
@@ -322,4 +334,4 @@ export function ContextualVideoBackground({
       {...props}
     />
   );
-}
+});

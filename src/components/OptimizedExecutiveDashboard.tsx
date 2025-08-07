@@ -1,11 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ExecutiveKpis } from './ExecutiveKpis';
-import { EnhancedLiveMap } from './EnhancedLiveMap';
 import { Enhanced3DCityMap } from './Enhanced3DCityMap';
-import { AlertsFeed } from './AlertsFeed';
-import { EnergyPanel } from './EnergyPanel';
-import { TopologyView } from './TopologyView';
 import { IncidentDetail } from './IncidentDetail';
 import type { Metrics, Alert, Incident } from '../types';
 
@@ -16,60 +11,7 @@ interface OptimizedExecutiveDashboardProps {
   topology: any | null;
 }
 
-interface CollapsibleSectionProps {
-  title: string;
-  children: React.ReactNode;
-  defaultExpanded?: boolean;
-  statusIndicator?: React.ReactNode;
-  compact?: boolean;
-}
 
-function CollapsibleSection({ 
-  title, 
-  children, 
-  defaultExpanded = false, 
-  statusIndicator,
-  compact = false 
-}: CollapsibleSectionProps) {
-  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
-
-  return (
-    <div className={`bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden ${compact ? 'text-sm' : ''}`}>
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-4 py-3 flex items-center justify-between bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
-      >
-        <div className="flex items-center gap-3">
-          <h3 className={`font-semibold text-white ${compact ? 'text-sm' : 'text-base'}`}>{title}</h3>
-          {statusIndicator}
-        </div>
-        <motion.div
-          animate={{ rotate: isExpanded ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
-          className="text-slate-400"
-        >
-          ▼
-        </motion.div>
-      </button>
-      
-      <AnimatePresence>
-        {isExpanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="overflow-hidden"
-          >
-            <div className={`p-4 ${compact ? 'p-3' : 'p-4'}`}>
-              {children}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
 
 function CompactKpiGrid({ metrics }: { metrics: Metrics | null }) {
   if (!metrics) {
@@ -144,8 +86,7 @@ function CompactAlertsList({ alerts }: { alerts: Alert[] }) {
 export function OptimizedExecutiveDashboard({ 
   metrics, 
   alerts, 
-  incidents, 
-  topology 
+  incidents 
 }: OptimizedExecutiveDashboardProps) {
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
 
@@ -289,10 +230,16 @@ export function OptimizedExecutiveDashboard({
               exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <IncidentDetail 
-                incident={selectedIncident} 
-                onClose={() => setSelectedIncident(null)} 
-              />
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-white">Incident Details</h2>
+                <button 
+                  onClick={() => setSelectedIncident(null)}
+                  className="text-slate-400 hover:text-white transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+              <IncidentDetail incident={selectedIncident} />
             </motion.div>
           </motion.div>
         )}

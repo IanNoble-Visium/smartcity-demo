@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import type { ReactNode } from 'react';
 import type { User, UserRole, Permission } from '../types';
@@ -135,47 +135,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
-    
+
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     // Mock authentication - in production, this would be a real API call
     const foundUser = mockUsers.find(u => u.email === email);
-    
+
     if (foundUser && password === 'demo123') {
       const userWithUpdatedLogin = {
         ...foundUser,
         lastLogin: new Date().toISOString()
       };
-      
+
       setUser(userWithUpdatedLogin);
       localStorage.setItem('trucontext_user', JSON.stringify(userWithUpdatedLogin));
       setIsLoading(false);
       return true;
     }
-    
+
     setIsLoading(false);
     return false;
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setUser(null);
     localStorage.removeItem('trucontext_user');
-  };
+  }, []);
 
-  const hasPermission = (permission: Permission): boolean => {
+  const hasPermission = useCallback((permission: Permission): boolean => {
     if (!user) return false;
     return user.permissions.includes(permission) || rolePermissions[user.role]?.includes(permission) || false;
-  };
+  }, [user]);
 
-  const hasRole = (role: UserRole): boolean => {
+  const hasRole = useCallback((role: UserRole): boolean => {
     if (!user) return false;
     return user.role === role;
-  };
+  }, [user]);
 
-  const value: AuthContextType = {
+  const value: AuthContextType = useMemo(() => ({
     user,
     isAuthenticated: !!user,
     isLoading,
@@ -183,7 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout,
     hasPermission,
     hasRole
-  };
+  }), [user, isLoading, login, logout, hasPermission, hasRole]);
 
   return (
     <AuthContext.Provider value={value}>

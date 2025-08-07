@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { VIDEO_CONFIGS, generateVideoFrame, type VideoConfig } from '../utils/videoGenerator';
 
 interface PlaceholderVideoGeneratorProps {
@@ -175,23 +175,23 @@ export function PlaceholderVideoGenerator({ context, onVideoGenerated }: Placeho
   );
 }
 
-// Hook to manage video generation
+// Hook to manage video generation with stable references
 export function useVideoGeneration() {
   const [generatedVideos, setGeneratedVideos] = useState<Record<string, string>>({});
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const generateVideoForContext = async (context: string): Promise<string> => {
+  const generateVideoForContext = useCallback(async (context: string): Promise<string> => {
     if (generatedVideos[context]) {
       return generatedVideos[context];
     }
 
     setIsGenerating(true);
-    
+
     try {
       const config = VIDEO_CONFIGS[context] || VIDEO_CONFIGS.executive;
       const canvas = document.createElement('canvas');
       generateVideoFrame(canvas, config, 0);
-      
+
       const dataUrl = canvas.toDataURL('image/png');
       setGeneratedVideos(prev => ({ ...prev, [context]: dataUrl }));
       return dataUrl;
@@ -201,7 +201,7 @@ export function useVideoGeneration() {
     } finally {
       setIsGenerating(false);
     }
-  };
+  }, [generatedVideos]);
 
   return {
     generatedVideos,
