@@ -147,335 +147,156 @@ export function OptimizedExecutiveDashboard({
   incidents, 
   topology 
 }: OptimizedExecutiveDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'details'>('overview');
-  const [is3DMode, setIs3DMode] = useState(true);
-  const criticalAlertsCount = alerts.filter(a => a.severity === 'critical' || a.severity === 'high').length;
-  const openIncidentsCount = incidents.filter(i => i.status !== 'resolved').length;
+  const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden">
-      {/* Responsive Header */}
-      <div className="flex-shrink-0 bg-slate-900/70 backdrop-blur-sm border-b border-slate-700/50 px-2 sm:px-4 py-2">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-lg sm:text-xl font-bold text-white">Executive Dashboard</h1>
-            <div className="flex items-center gap-4 text-xs text-slate-400">
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                Live
-              </span>
-              <span className="hidden sm:inline">Updated 2s ago</span>
+    <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      {/* Single Viewport Grid Layout */}
+      <div className="h-full grid grid-cols-12 grid-rows-12 gap-2 p-2">
+        
+        {/* Header Status Bar */}
+        <div className="col-span-12 row-span-1 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg flex items-center justify-between px-4">
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl font-bold text-white">Executive Dashboard</h1>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span className="text-green-300 text-sm font-medium">LIVE</span>
+              <span className="text-slate-400 text-sm">Updated 2s ago</span>
             </div>
           </div>
+          <div className="flex items-center gap-4 text-sm">
+            <span className="text-slate-300">System Health: <span className="text-green-400 font-medium">98.5%</span></span>
+            <span className="text-slate-300">Active Incidents: <span className="text-yellow-400 font-medium">{incidents.length}</span></span>
+          </div>
+        </div>
+
+        {/* KPI Cards - Horizontal Layout */}
+        <div className="col-span-12 row-span-2 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg p-3">
+          <CompactKpiGrid metrics={metrics} />
+        </div>
+
+        {/* Main 3D Map - Primary Focus */}
+        <div className="col-span-8 row-span-8 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden">
+          <div className="h-full relative">
+            <div className="absolute top-2 left-2 z-10 bg-slate-900/80 backdrop-blur-md rounded px-2 py-1">
+              <span className="text-cyan-300 text-sm font-medium">Live City Map</span>
+              <span className="text-slate-400 text-xs ml-2">Baltimore Metropolitan Area</span>
+            </div>
+            <div className="absolute top-2 right-2 z-10 bg-slate-900/80 backdrop-blur-md rounded px-2 py-1">
+              <span className="text-green-300 text-sm">ONLINE</span>
+              <span className="text-slate-400 text-xs ml-2">Zoom: 1.0</span>
+            </div>
+            <Enhanced3DCityMap incidents={incidents} />
+          </div>
+        </div>
+
+        {/* Right Sidebar - Alerts and Details */}
+        <div className="col-span-4 row-span-8 space-y-2">
           
-          {/* Controls */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
-            {/* 3D Mode Toggle */}
+          {/* Critical Alerts */}
+          <div className="bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg h-1/2">
+            <div className="p-3 border-b border-slate-700/50">
+              <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                <span className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></span>
+                Critical Alerts
+              </h3>
+            </div>
+            <div className="p-3 h-full overflow-y-auto">
+              <CompactAlertsList alerts={alerts} />
+            </div>
+          </div>
+
+          {/* Incident Details */}
+          <div className="bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg h-1/2">
+            <div className="p-3 border-b border-slate-700/50">
+              <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                <span className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></span>
+                Recent Incidents
+              </h3>
+            </div>
+            <div className="p-3 h-full overflow-y-auto">
+              {incidents.length > 0 ? (
+                <div className="space-y-2">
+                  {incidents.slice(0, 4).map(incident => (
+                    <div 
+                      key={incident.id} 
+                      className="bg-slate-800/50 rounded p-2 cursor-pointer hover:bg-slate-700/50 transition-colors"
+                      onClick={() => setSelectedIncident(incident)}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className={`text-xs font-medium ${
+                          incident.severity === 'critical' ? 'text-red-400' :
+                          incident.severity === 'high' ? 'text-orange-400' :
+                          incident.severity === 'medium' ? 'text-yellow-400' : 'text-blue-400'
+                        }`}>
+                          {incident.severity.toUpperCase()}
+                        </span>
+                        <span className="text-xs text-slate-400">
+                          {new Date(incident.startTime).toLocaleTimeString()}
+                        </span>
+                      </div>
+                      <div className="text-sm text-white font-medium">{incident.summary}</div>
+                      <div className="text-xs text-slate-300 mt-1 line-clamp-2">{incident.description}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center text-slate-400 py-8">
+                  <div className="text-2xl mb-2">✓</div>
+                  <div className="text-sm">No active incidents</div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Status Bar */}
+        <div className="col-span-12 row-span-1 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg flex items-center justify-between px-4">
+          <div className="flex items-center gap-6 text-sm">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400">Map:</span>
-              <button
-                onClick={() => setIs3DMode(!is3DMode)}
-                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                  is3DMode 
-                    ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/25' 
-                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                }`}
-              >
-                {is3DMode ? '3D 🏙️' : '2D 🗺️'}
-              </button>
+              <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+              <span className="text-slate-300">Network: <span className="text-blue-400">Optimal</span></span>
             </div>
-            
-            {/* Tab Navigation */}
-            <div className="flex bg-slate-800/50 rounded-lg p-1 w-full sm:w-auto">
-              <button
-                onClick={() => setActiveTab('overview')}
-                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                  activeTab === 'overview' 
-                    ? 'bg-cyan-500 text-white' 
-                    : 'text-slate-300 hover:text-white'
-                }`}
-              >
-                Overview
-              </button>
-              <button
-                onClick={() => setActiveTab('details')}
-                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                  activeTab === 'details' 
-                    ? 'bg-cyan-500 text-white' 
-                    : 'text-slate-300 hover:text-white'
-                }`}
-              >
-                Details
-              </button>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+              <span className="text-slate-300">Infrastructure: <span className="text-green-400">92%</span></span>
             </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+              <span className="text-slate-300">Traffic: <span className="text-yellow-400">Moderate</span></span>
+            </div>
+          </div>
+          <div className="text-xs text-slate-400">
+            TruContext Smart City Operations • Baltimore, MD • {new Date().toLocaleString()}
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-hidden">
-        <AnimatePresence mode="wait">
-          {activeTab === 'overview' && (
+      {/* Incident Detail Modal */}
+      <AnimatePresence>
+        {selectedIncident && (
+          <motion.div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedIncident(null)}
+          >
             <motion.div
-              key="overview"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              transition={{ duration: 0.3 }}
-              className="h-full p-2 sm:p-4 overflow-auto"
+              className="bg-slate-900 border border-slate-700 rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 sm:gap-4 h-full max-h-full">
-                {/* Left Column - Map and KPIs */}
-                <div className="lg:col-span-8 col-span-1 flex flex-col gap-2 sm:gap-4 min-h-0">
-                  {/* Compact KPIs */}
-                  <div className="bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg p-2 sm:p-4 flex-shrink-0">
-                    <div className="flex items-center justify-between mb-3">
-                      <h2 className="text-sm font-semibold text-white">Key Performance Indicators</h2>
-                      <span className="status-indicator status-success text-xs">All Systems</span>
-                    </div>
-                    <CompactKpiGrid metrics={metrics} />
-                  </div>
-
-                  {/* Enhanced Live Map - Now takes more space and supports 3D */}
-                  <div className="flex-1 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden min-h-0" style={{ minHeight: '300px' }}>
-                    <div className="px-2 sm:px-4 py-2 sm:py-3 bg-slate-800/50 border-b border-slate-700/50 flex-shrink-0">
-                      <div className="flex items-center justify-between">
-                        <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-                          {is3DMode ? '3D Live City Map' : 'Live City Map'}
-                          {is3DMode && <span className="text-cyan-400 text-xs">🏙️</span>}
-                        </h2>
-                        <div className="flex items-center gap-4 text-xs">
-                          <div className="flex items-center gap-2">
-                            <span className="status-indicator status-success">Active</span>
-                            <span className="text-slate-400">{incidents.length} Incidents</span>
-                          </div>
-                          <motion.button
-                            onClick={() => setIs3DMode(!is3DMode)}
-                            className={`px-2 py-1 rounded text-xs transition-colors ${
-                              is3DMode 
-                                ? 'bg-cyan-500 text-white' 
-                                : 'bg-slate-600 text-slate-300 hover:bg-slate-500'
-                            }`}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                          >
-                            {is3DMode ? '→ 2D' : '→ 3D'}
-                          </motion.button>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex-1 min-h-0" style={{ height: 'calc(100% - 60px)' }}>
-                      <AnimatePresence mode="wait">
-                        {is3DMode ? (
-                          <motion.div
-                            key="3d-map"
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 1.05 }}
-                            transition={{ duration: 0.5 }}
-                            className="h-full"
-                          >
-                            <Enhanced3DCityMap incidents={incidents} />
-                          </motion.div>
-                        ) : (
-                          <motion.div
-                            key="2d-map"
-                            initial={{ opacity: 0, scale: 1.05 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            transition={{ duration: 0.5 }}
-                            className="h-full"
-                          >
-                            <EnhancedLiveMap incidents={incidents} />
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Column - Alerts and Quick Info */}
-                <div className="lg:col-span-4 col-span-1 flex flex-col gap-2 sm:gap-4 min-h-0">
-                  {/* Critical Alerts */}
-                  <CollapsibleSection
-                    title="Critical Alerts"
-                    defaultExpanded={true}
-                    compact={true}
-                    statusIndicator={
-                      criticalAlertsCount > 0 ? (
-                        <span className="status-indicator status-critical text-xs">
-                          {criticalAlertsCount} Active
-                        </span>
-                      ) : (
-                        <span className="status-indicator status-success text-xs">Clear</span>
-                      )
-                    }
-                  >
-                    <CompactAlertsList alerts={alerts} />
-                  </CollapsibleSection>
-
-                  {/* Active Incidents */}
-                  <CollapsibleSection
-                    title="Active Incidents"
-                    defaultExpanded={openIncidentsCount > 0}
-                    compact={true}
-                    statusIndicator={
-                      <span className={`status-indicator text-xs ${
-                        openIncidentsCount > 0 ? 'status-warning' : 'status-success'
-                      }`}>
-                        {openIncidentsCount} Open
-                      </span>
-                    }
-                  >
-                    {incidents.length > 0 ? (
-                      <div className="space-y-2">
-                        {incidents.filter(i => i.status !== 'resolved').slice(0, 3).map(incident => (
-                          <div key={incident.id} className="bg-slate-800/50 rounded p-2">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-xs text-yellow-400 font-medium">#{incident.id}</span>
-                              <span className="text-xs text-slate-400">{incident.severity}</span>
-                            </div>
-                            <div className="text-sm text-white font-medium line-clamp-1">{incident.summary}</div>
-                            <div className="text-xs text-slate-300 mt-1 line-clamp-2">{incident.description}</div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center text-slate-400 py-4">
-                        <div className="text-2xl mb-1">✓</div>
-                        <div className="text-xs">No active incidents</div>
-                      </div>
-                    )}
-                  </CollapsibleSection>
-
-                  {/* System Status */}
-                  <CollapsibleSection
-                    title="System Status"
-                    defaultExpanded={false}
-                    compact={true}
-                    statusIndicator={
-                      <span className="status-indicator status-success text-xs">Operational</span>
-                    }
-                  >
-                    <div className="space-y-2 text-xs">
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Network Health:</span>
-                        <span className="text-green-400">98.5%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Data Processing:</span>
-                        <span className="text-green-400">Normal</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">API Response:</span>
-                        <span className="text-green-400">{metrics?.networkLatency.toFixed(0)}ms</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Active Connections:</span>
-                        <span className="text-cyan-400">1,247</span>
-                      </div>
-                    </div>
-                  </CollapsibleSection>
-                </div>
-              </div>
+              <IncidentDetail 
+                incident={selectedIncident} 
+                onClose={() => setSelectedIncident(null)} 
+              />
             </motion.div>
-          )}
-
-          {activeTab === 'details' && (
-            <motion.div
-              key="details"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-              className="h-full p-2 sm:p-4 overflow-auto"
-            >
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 sm:gap-4">
-                {/* Full KPIs */}
-                <div className="col-span-12">
-                  <CollapsibleSection
-                    title="Detailed Performance Metrics"
-                    defaultExpanded={true}
-                  >
-                    <ExecutiveKpis metrics={metrics} />
-                  </CollapsibleSection>
-                </div>
-
-                {/* Energy Management */}
-                <div className="lg:col-span-6 col-span-1">
-                  <CollapsibleSection
-                    title="Energy Management"
-                    defaultExpanded={false}
-                    statusIndicator={<span className="status-indicator status-success text-xs">Grid Stable</span>}
-                  >
-                    <EnergyPanel metrics={metrics} />
-                  </CollapsibleSection>
-                </div>
-
-                {/* Network Topology */}
-                <div className="lg:col-span-6 col-span-1">
-                  <CollapsibleSection
-                    title="Network Topology"
-                    defaultExpanded={false}
-                    statusIndicator={
-                      <span className="status-indicator status-success text-xs">
-                        {topology?.nodes.length || 0} Nodes
-                      </span>
-                    }
-                  >
-                    <TopologyView topology={topology} />
-                  </CollapsibleSection>
-                </div>
-
-                {/* All Alerts */}
-                <div className="lg:col-span-6 col-span-1">
-                  <CollapsibleSection
-                    title="All Alerts"
-                    defaultExpanded={false}
-                    statusIndicator={
-                      <span className={`status-indicator text-xs ${
-                        criticalAlertsCount > 0 ? 'status-warning' : 'status-success'
-                      }`}>
-                        {alerts.length} Total
-                      </span>
-                    }
-                  >
-                    <div style={{ height: '400px', overflow: 'auto' }}>
-                      <AlertsFeed alerts={alerts} />
-                    </div>
-                  </CollapsibleSection>
-                </div>
-
-                {/* Incident Details */}
-                <div className="lg:col-span-6 col-span-1">
-                  <CollapsibleSection
-                    title="Incident Management"
-                    defaultExpanded={false}
-                    statusIndicator={
-                      <span className={`status-indicator text-xs ${
-                        openIncidentsCount > 0 ? 'status-warning' : 'status-success'
-                      }`}>
-                        {openIncidentsCount} Open
-                      </span>
-                    }
-                  >
-                    <div style={{ height: '400px', overflow: 'auto' }}>
-                      {incidents.length > 0 ? (
-                        <IncidentDetail incident={incidents[0]} />
-                      ) : (
-                        <div className="text-center text-slate-400 py-8">
-                          <p>No active incidents</p>
-                          <p className="text-xs mt-1">All systems operating normally</p>
-                        </div>
-                      )}
-                    </div>
-                  </CollapsibleSection>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

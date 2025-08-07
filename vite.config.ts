@@ -11,7 +11,8 @@ export default defineConfig({
       'three',
       'three/examples/jsm/controls/OrbitControls',
       'three/examples/jsm/loaders/GLTFLoader',
-      'three/examples/jsm/utils/BufferGeometryUtils'
+      'three/examples/jsm/utils/BufferGeometryUtils',
+      'cesium'
     ],
     exclude: [],
     force: false,
@@ -32,7 +33,8 @@ export default defineConfig({
       output: {
         manualChunks: {
           'three': ['three'],
-          'react-three': ['@react-three/fiber', '@react-three/drei']
+          'react-three': ['@react-three/fiber', '@react-three/drei'],
+          'cesium': ['cesium']
         }
       }
     }
@@ -41,5 +43,9 @@ export default defineConfig({
     alias: {
       'three': 'three'
     }
+  },
+  define: {
+    // Define Cesium base URL for assets
+    CESIUM_BASE_URL: JSON.stringify('/cesium/')
   }
 })

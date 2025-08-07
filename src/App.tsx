@@ -7,6 +7,7 @@ import { GeospatialTrackingSystem } from "./components/GeospatialTrackingSystem"
 import { ExternalSystemsIntegration } from "./components/ExternalSystemsIntegration";
 import { AdvancedIncidentManagement } from "./components/AdvancedIncidentManagement";
 import { OptimizedExecutiveDashboard } from "./components/OptimizedExecutiveDashboard";
+import { CesiumBaltimoreMap } from "./components/CesiumBaltimoreMap";
 import { ContextualVideoBackground } from "./components/VideoBackground";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AuthProvider, withAuth } from "./components/AuthProvider";
@@ -17,7 +18,7 @@ function Dashboard() {
   const { metrics, alerts, incidents, topology } = useMockRealtime();
   const { updateMetrics, addAlert, addIncident, updateTopology } = useDataStore();
   const { addNotification } = useUIStore();
-  const [activeView, setActiveView] = useState<'dashboard' | 'analytics' | 'anomaly' | 'geospatial' | 'systems' | 'incidents'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'analytics' | 'anomaly' | 'geospatial' | 'systems' | 'incidents' | 'cesium'>('dashboard');
 
   // Update global stores with real-time data
   useEffect(() => {
@@ -101,6 +102,12 @@ function Dashboard() {
         >
           Incident Management
         </button>
+        <button
+          className={`btn text-xs whitespace-nowrap ${activeView === 'cesium' ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={() => setActiveView('cesium')}
+        >
+          3D Baltimore Map
+        </button>
       </div>
     </div>
   );
@@ -148,6 +155,12 @@ function Dashboard() {
         
         {activeView === 'incidents' && (
           <AdvancedIncidentManagement />
+        )}
+        
+        {activeView === 'cesium' && (
+          <div className="h-screen">
+            <CesiumBaltimoreMap incidents={incidents} />
+          </div>
         )}
       </main>
     </div>
