@@ -83,10 +83,11 @@ function CompactAlertsList({ alerts }: { alerts: Alert[] }) {
   );
 }
 
-export function OptimizedExecutiveDashboard({ 
-  metrics, 
-  alerts, 
-  incidents 
+export function OptimizedExecutiveDashboard({
+  metrics,
+  alerts,
+  incidents,
+  topology: _topology
 }: OptimizedExecutiveDashboardProps) {
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
 

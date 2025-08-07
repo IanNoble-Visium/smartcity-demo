@@ -560,10 +560,11 @@ export function CesiumBaltimoreMap({ incidents, className = '' }: CesiumBaltimor
 
       {/* View Controls */}
       <motion.div
-        className="absolute bottom-4 right-4 bg-slate-900/95 backdrop-blur-md rounded-xl border border-cyan-500/30 z-20 shadow-2xl"
+        className="absolute bottom-4 right-4 bg-slate-900/95 backdrop-blur-md rounded-xl border border-cyan-500/30 shadow-2xl"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
+        style={{ zIndex: 9999 }}
       >
         <div className="p-4">
           <h4 className="font-semibold text-sm text-cyan-300 mb-3 flex items-center gap-2">
@@ -596,16 +597,126 @@ export function CesiumBaltimoreMap({ incidents, className = '' }: CesiumBaltimor
 
       {/* Status Indicator */}
       <motion.div
-        className="absolute top-4 right-4 bg-slate-900/80 backdrop-blur-md rounded-xl p-3 border border-green-500/30 z-10"
+        className="absolute top-4 right-4 bg-slate-900/80 backdrop-blur-md rounded-xl p-3 border border-green-500/30"
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, delay: 0.3 }}
+        style={{ zIndex: 9999 }}
       >
         <div className="flex items-center gap-2 text-sm">
           <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
           <span className="text-green-300 font-medium">LIVE</span>
           <span className="text-slate-400">|</span>
           <span className="text-slate-300">{incidents.length} Incidents</span>
+        </div>
+      </motion.div>
+
+      {/* Comprehensive Control Panel */}
+      <motion.div
+        className="absolute top-4 left-4 bg-slate-900/95 backdrop-blur-md rounded-xl border border-cyan-500/30 shadow-2xl max-w-sm"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        style={{ zIndex: 9999 }}
+      >
+        <div className="p-4">
+          {/* Mouse Controls Guide */}
+          <div className="mb-4">
+            <h4 className="font-semibold text-sm text-cyan-300 mb-2 flex items-center gap-2">
+              <span className="text-cyan-400">🖱️</span>
+              Mouse Controls
+            </h4>
+            <div className="text-xs text-slate-400 space-y-1">
+              <div className="flex justify-between">
+                <span>Left Click + Drag:</span>
+                <span className="text-cyan-300">Rotate</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Right Click + Drag:</span>
+                <span className="text-cyan-300">Pan</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Mouse Wheel:</span>
+                <span className="text-cyan-300">Zoom</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Middle Click + Drag:</span>
+                <span className="text-cyan-300">Tilt</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Incident Layers */}
+          <div className="mb-4">
+            <h4 className="font-semibold text-sm text-cyan-300 mb-2 flex items-center gap-2">
+              <span className="text-cyan-400">🚨</span>
+              Incident Layers
+            </h4>
+            <div className="space-y-2">
+              {layers.map((layer) => (
+                <motion.div
+                  key={layer.id}
+                  className="flex items-center justify-between p-2 bg-slate-800/50 rounded-lg border border-slate-700/50"
+                  whileHover={{ backgroundColor: 'rgba(30, 41, 59, 0.8)' }}
+                >
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className={`w-3 h-3 rounded-full ${
+                        layer.visible ? 'bg-green-400' : 'bg-slate-600'
+                      }`}
+                    />
+                    <span className="text-xs text-slate-300">{layer.name}</span>
+                  </div>
+                  <motion.button
+                    className={`px-2 py-1 rounded text-xs font-medium transition-all duration-200 ${
+                      layer.visible 
+                        ? 'bg-green-500/20 text-green-300 border border-green-500/50' 
+                        : 'bg-slate-600/20 text-slate-400 border border-slate-600/50'
+                    }`}
+                    onClick={() => toggleLayer(layer.id)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {layer.visible ? 'ON' : 'OFF'}
+                  </motion.button>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Building Types Legend */}
+          <div>
+            <h4 className="font-semibold text-sm text-cyan-300 mb-2 flex items-center gap-2">
+              <span className="text-cyan-400">🏢</span>
+              Building Types
+            </h4>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                <span className="text-slate-300">Hospitals</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <span className="text-slate-300">Schools</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                <span className="text-slate-300">Religious</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                <span className="text-slate-300">Commercial</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                <span className="text-slate-300">Industrial</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                <span className="text-slate-300">Residential</span>
+              </div>
+            </div>
+          </div>
         </div>
       </motion.div>
     </div>

@@ -16,6 +16,12 @@ export interface CesiumModule {
   NearFarScalar: any;
   LabelStyle: any;
   Cartesian2: any;
+  // Additional properties for compatibility
+  CesiumTerrainProvider: any;
+  IonResource: any;
+  BingMapsImageryProvider: any;
+  BingMapsStyle: any;
+  Cesium3DTileset: any;
 }
 
 let cesiumModule: any = null;
