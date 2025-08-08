@@ -1,6 +1,5 @@
 import React, { useRef, useEffect, useState, memo } from 'react';
 import { motion } from 'framer-motion';
-import { useVideoGeneration } from './PlaceholderVideoGenerator';
 
 interface VideoBackgroundProps {
   videoSrc: string;
@@ -310,32 +309,10 @@ export const ContextualVideoBackground = memo(function ContextualVideoBackground
 }: ContextualVideoBackgroundProps) {
   const videoSrc = useContextualVideo(context, fallback);
   const fallbackGradient = FALLBACK_GRADIENTS[context] || FALLBACK_GRADIENTS.executive;
-  const { generateVideoForContext } = useVideoGeneration();
-  const [placeholderVideoSrc, setPlaceholderVideoSrc] = useState<string>('');
-
-  // Generate placeholder video when original video fails to load
-  useEffect(() => {
-    const generatePlaceholder = async () => {
-      try {
-        const placeholderUrl = await generateVideoForContext(context);
-        if (placeholderUrl && placeholderUrl !== placeholderVideoSrc) {
-          setPlaceholderVideoSrc(placeholderUrl);
-        }
-      } catch (error) {
-        console.warn('Failed to generate placeholder video:', error);
-      }
-    };
-
-    // Only generate placeholder if we don't have one yet
-    if (!placeholderVideoSrc) {
-      generatePlaceholder();
-    }
-  }, [context]); // do not depend on placeholderVideoSrc to avoid loops
 
   return (
     <VideoBackground
       videoSrc={videoSrc}
-      fallbackImage={placeholderVideoSrc}
       fallbackGradient={fallbackGradient}
       enableAnimatedFallback={true}
       {...props}

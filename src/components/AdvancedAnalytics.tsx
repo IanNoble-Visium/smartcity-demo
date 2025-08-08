@@ -45,6 +45,8 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
 
   // Compact view mode
   const [compactMode, setCompactMode] = useState(true);
+  // Right-side panel tab (space-efficient, no extra dialogs)
+  const [rightTab, setRightTab] = useState<'predictions' | 'anomalies'>('predictions');
 
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({
@@ -164,16 +166,18 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
   // Compact KPI Cards Component for single-viewport design
   const CompactKPICards = () => (
     <motion.div
-      className="card mb-3"
+      className="card"
       initial={false}
       animate={{
-        height: expandedSections.kpis ? 'auto' : '50px',
-        overflow: expandedSections.kpis ? 'visible' : 'hidden'
+        // Prevent content (e.g., charts) from spilling into other cards
+        overflow: 'hidden'
       }}
       transition={{ duration: 0.3 }}
+      style={{ height: compactMode ? 110 : undefined }}
     >
       <div
         className="card-header cursor-pointer flex items-center justify-between py-2"
+        style={{ marginBottom: 0 }}
         onClick={() => toggleSection('kpis')}
       >
         <div className="flex items-center gap-2">
@@ -205,7 +209,7 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
             transition={{ duration: 0.3 }}
             className="card-content p-3 overflow-hidden"
           >
-            <div className={`grid gap-2 ${
+            <div className={`grid gap-1 ${
               compactMode
                 ? 'grid-cols-3 md:grid-cols-6 lg:grid-cols-8'
                 : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
@@ -225,13 +229,13 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
                   {compactMode ? (
                     // Ultra-compact layout for single viewport
                     <div className="text-center">
-                      <div className="text-xs text-muted mb-1 truncate" title={metric.name}>
-                        {metric.name.length > 12 ? metric.name.substring(0, 12) + '...' : metric.name}
+                      <div className="text-[10px] text-muted mb-0.5 truncate" title={metric.name}>
+                        {metric.name.length > 10 ? metric.name.substring(0, 10) + '...' : metric.name}
                       </div>
-                      <div className="text-sm font-bold text-primary">
+                      <div className="text-xs font-bold text-primary">
                         {metric.value.toFixed(1)}{metric.unit}
                       </div>
-                      <div className={`text-xs ${
+                      <div className={`text-[10px] ${
                         metric.changePercent > 0 ? 'text-success' :
                         metric.changePercent < 0 ? 'text-warning' : 'text-muted'
                       }`}>
@@ -304,16 +308,17 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
 
     return (
       <motion.div
-        className="card mb-3"
+        className="card"
         initial={false}
         animate={{
-          height: expandedSections.mainChart ? 'auto' : '50px',
-          overflow: expandedSections.mainChart ? 'visible' : 'hidden'
+          // Keep overflow hidden even when expanded to avoid overlapping visuals
+          overflow: 'hidden'
         }}
         transition={{ duration: 0.3 }}
       >
         <div
           className="card-header cursor-pointer flex items-center justify-between py-2"
+          style={{ marginBottom: 0 }}
           onClick={() => toggleSection('mainChart')}
         >
           <div className="flex items-center gap-2">
@@ -368,7 +373,7 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
               transition={{ duration: 0.3 }}
               className="card-content p-3 overflow-hidden"
             >
-              <div style={{ height: '250px' }}>
+              <div style={{ height: compactMode ? '80px' : '250px' }}>
                 <ChartErrorBoundary>
                   <ResponsiveContainer
                     width="100%"
@@ -459,16 +464,17 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
 
     return (
       <motion.div
-        className="card mb-3"
+        className="card"
         initial={false}
         animate={{
-          height: expandedSections.analytics ? 'auto' : '50px',
-          overflow: expandedSections.analytics ? 'visible' : 'hidden'
+          // Hidden overflow ensures charts/tooltips don't bleed outside
+          overflow: 'hidden'
         }}
         transition={{ duration: 0.3 }}
       >
         <div
           className="card-header cursor-pointer flex items-center justify-between py-2"
+          style={{ marginBottom: 0 }}
           onClick={() => toggleSection('analytics')}
         >
           <div className="flex items-center gap-2">
@@ -493,7 +499,7 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
                 {/* Category Distribution */}
                 <div className="bg-secondary rounded p-3">
                   <h4 className="text-sm font-medium text-muted mb-3">Performance by Category</h4>
-                  <div style={{ height: '200px' }}>
+                  <div style={{ height: compactMode ? '80px' : '200px' }}>
                     <ChartErrorBoundary>
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
@@ -503,7 +509,7 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
                             cy="50%"
                             labelLine={false}
                             label={({ category, percent }) => `${category} ${((percent || 0) * 100).toFixed(0)}%`}
-                            outerRadius={60}
+                            outerRadius={compactMode ? 36 : 60}
                             fill="#8884d8"
                             dataKey="count"
                           >
@@ -528,16 +534,16 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
                 {/* Performance Gauge */}
                 <div className="bg-secondary rounded p-3">
                   <h4 className="text-sm font-medium text-muted mb-3">Overall Performance Score</h4>
-                  <div style={{ height: '200px' }}>
+                  <div style={{ height: compactMode ? '80px' : '200px' }}>
                     <ChartErrorBoundary>
                       <ResponsiveContainer width="100%" height="100%">
-                        <RadialBarChart cx="50%" cy="50%" innerRadius="40%" outerRadius="80%" data={[{
+                        <RadialBarChart cx="50%" cy="50%" innerRadius={compactMode ? '38%' : '40%'} outerRadius={compactMode ? '66%' : '80%'} data={[{
                           name: 'Performance',
                           value: overallScore,
                           fill: overallScore > 80 ? '#10b981' : overallScore > 60 ? '#f59e0b' : '#ef4444'
-                        }]}>
+                        }]}> 
                           <RadialBar background dataKey="value" />
-                          <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="text-xl font-bold fill-primary">
+                          <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="text-sm font-bold fill-primary">
                             {overallScore.toFixed(1)}
                           </text>
                         </RadialBarChart>
@@ -561,124 +567,73 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
     );
   };
 
-
-
-  // Compact Predictive Analytics Component
-  const CompactPredictiveAnalytics = () => (
-    <motion.div
-      className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-3"
-      initial={false}
-    >
-      {/* AI Forecasting */}
-      <motion.div
-        className="card"
-        initial={false}
-        animate={{
-          height: expandedSections.predictions ? 'auto' : '50px',
-          overflow: expandedSections.predictions ? 'visible' : 'hidden'
-        }}
-        transition={{ duration: 0.3 }}
-      >
-        <div
-          className="card-header cursor-pointer flex items-center justify-between py-2"
-          onClick={() => toggleSection('predictions')}
-        >
-          <div className="flex items-center gap-2">
-            <h3 className="card-title text-base">AI-Powered Forecasting</h3>
-            <span className="status-indicator status-info text-xs">ML</span>
-          </div>
-          <span className="text-muted text-sm">
-            {expandedSections.predictions ? '▼' : '▶'}
-          </span>
+  // Right-side AI & Alerts panel (Tabbed to save vertical space)
+  const CompactAIPanel = () => (
+    <motion.div className="card" initial={false} style={{ height: compactMode ? 120 : 'auto' }}>
+      <div className="card-header py-2 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <h3 className="card-title text-base">AI & Alerts</h3>
+          <span className="status-indicator status-info text-xs">Live</span>
         </div>
-
-        <AnimatePresence>
-          {expandedSections.predictions && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3 }}
-              className="card-content p-3 overflow-hidden"
-            >
-              <div className="space-y-2">
-                {analyticsMetrics.slice(0, 3).map((metric) => (
-                  <div key={metric.id} className="flex items-center justify-between p-2 bg-secondary rounded text-sm">
-                    <div>
-                      <div className="font-medium">{metric.name}</div>
-                      <div className="text-xs text-muted">Next 24h prediction</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold text-primary">
-                        {(metric.value * (1 + (metric.changePercent / 100) * 0.5)).toFixed(1)}{metric.unit}
-                      </div>
-                      <div className="text-xs text-success">95% confidence</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-
-      {/* Anomaly Detection */}
-      <motion.div
-        className="card"
-        initial={false}
-        animate={{
-          height: expandedSections.anomalies ? 'auto' : '50px',
-          overflow: expandedSections.anomalies ? 'visible' : 'hidden'
-        }}
-        transition={{ duration: 0.3 }}
-      >
-        <div
-          className="card-header cursor-pointer flex items-center justify-between py-2"
-          onClick={() => toggleSection('anomalies')}
-        >
-          <div className="flex items-center gap-2">
-            <h3 className="card-title text-base">Anomaly Detection</h3>
-            <span className="status-indicator status-success text-xs">Active</span>
-          </div>
-          <span className="text-muted text-sm">
-            {expandedSections.anomalies ? '▼' : '▶'}
-          </span>
+        <div className="flex items-center gap-1 text-xs">
+          <button
+            className={`btn btn-ghost btn-xs ${rightTab === 'predictions' ? 'text-primary' : ''}`}
+            onClick={() => setRightTab('predictions')}
+          >
+            Forecasts
+          </button>
+          <span className="text-muted">|</span>
+          <button
+            className={`btn btn-ghost btn-xs ${rightTab === 'anomalies' ? 'text-primary' : ''}`}
+            onClick={() => setRightTab('anomalies')}
+          >
+            Anomalies
+          </button>
         </div>
+      </div>
 
-        <AnimatePresence>
-          {expandedSections.anomalies && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3 }}
-              className="card-content p-3 overflow-hidden"
-            >
-              <div className="space-y-2">
-                <div className="flex items-center justify-between p-2 bg-secondary rounded text-sm">
-                  <div>
-                    <div className="font-medium">Traffic Pattern Anomaly</div>
-                    <div className="text-xs text-muted">Detected 15 min ago</div>
-                  </div>
-                  <span className="status-indicator status-warning text-xs">Medium</span>
+      <div className="card-content p-2 h-full min-h-0 overflow-y-auto">
+        {rightTab === 'predictions' ? (
+          <div className="space-y-2">
+            {analyticsMetrics.slice(0, 5).map((metric) => (
+              <div key={metric.id} className="flex items-center justify-between p-2 bg-secondary rounded text-sm">
+                <div>
+                  <div className="font-medium line-clamp-1 text-xs">{metric.name}</div>
+                  <div className="text-[10px] text-muted">Next 24h prediction</div>
                 </div>
-
-                <div className="flex items-center justify-between p-2 bg-secondary rounded text-sm">
-                  <div>
-                    <div className="font-medium">Energy Consumption Spike</div>
-                    <div className="text-xs text-muted">Detected 1h ago</div>
+                <div className="text-right">
+                  <div className="font-bold text-primary text-xs">
+                    {(metric.value * (1 + (metric.changePercent / 100) * 0.5)).toFixed(1)}{metric.unit}
                   </div>
-                  <span className="status-indicator status-info text-xs">Low</span>
-                </div>
-
-                <div className="text-center pt-2">
-                  <button className="btn btn-ghost btn-xs">View All</button>
+                  <div className="text-[10px] text-success">95% confidence</div>
                 </div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between p-2 bg-secondary rounded text-sm">
+              <div>
+                <div className="font-medium text-xs">Traffic Pattern Anomaly</div>
+                <div className="text-[10px] text-muted">Detected 15 min ago</div>
+              </div>
+              <span className="status-indicator status-warning text-xs">Medium</span>
+            </div>
+
+            <div className="flex items-center justify-between p-2 bg-secondary rounded text-sm">
+              <div>
+                <div className="font-medium">Energy Consumption Spike</div>
+                <div className="text-xs text-muted">Detected 1h ago</div>
+              </div>
+              <span className="status-indicator status-info text-xs">Low</span>
+            </div>
+
+            <div className="text-center pt-2">
+              <button className="btn btn-ghost btn-xs">View All</button>
+            </div>
+          </div>
+        )}
+      </div>
     </motion.div>
   );
 
@@ -707,7 +662,7 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
   };
 
   return (
-    <div className={`advanced-analytics ${className} h-screen overflow-hidden flex flex-col`}>
+    <div className={`advanced-analytics ${compactMode ? 'ua-compact' : ''} ${className} h-full min-h-0 overflow-hidden flex flex-col`}>
       {/* Video Background */}
       <ContextualVideoBackground
         context="analytics"
@@ -749,19 +704,27 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
         </div>
       </div>
 
-      {/* Single-viewport scrollable content */}
-      <div className="relative z-10 flex-1 overflow-y-auto px-4 pb-4 space-y-3">
-        {/* Compact KPI Cards */}
-        <CompactKPICards />
+      {/* Single-viewport content with clean 3-row layout */}
+      <div className="relative z-10 flex-1 px-2 pb-2 min-h-0 overflow-hidden flex flex-col gap-1">
+        {/* Row 1: KPIs (compact) */}
+        <div className="flex-shrink-0">
+          <CompactKPICards />
+        </div>
 
-        {/* Compact Main Chart */}
-        <CompactMainChart />
+        {/* Row 2: Main content split (fills available height) */}
+        <div className="flex-1 min-h-0 grid grid-cols-12 grid-rows-1 gap-1">
+          <div className="col-span-12 lg:col-span-8 min-h-0">
+            <CompactMainChart />
+          </div>
+          <div className="col-span-12 lg:col-span-4 min-h-0">
+            <CompactAIPanel />
+          </div>
+        </div>
 
-        {/* Compact Analytics Grid */}
-        <CompactAnalyticsGrid />
-
-        {/* Compact Predictive Analytics */}
-        <CompactPredictiveAnalytics />
+        {/* Row 3: Analytics overview (fixed bottom block) */}
+        <div className="flex-shrink-0">
+          <CompactAnalyticsGrid />
+        </div>
       </div>
     </div>
   );

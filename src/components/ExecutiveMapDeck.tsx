@@ -1,4 +1,6 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import type React from 'react';
 import { DeckGL } from '@deck.gl/react';
 import { GeoJsonLayer, ScatterplotLayer, LineLayer } from '@deck.gl/layers';
 import { HeatmapLayer, HexagonLayer } from '@deck.gl/aggregation-layers';
@@ -88,6 +90,23 @@ export function ExecutiveMapDeck({ className = '', alerts, onAlertSelect, focuse
     bearing: 0
   });
   const [currentLayer, setCurrentLayer] = useState<LayerType>('geojson');
+  // Refs for draggable overlays
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const legendRef = useRef<HTMLDivElement | null>(null);
+  const controlsRef = useRef<HTMLDivElement | null>(null);
+  // Positions for draggable overlays (in px from top-left of map)
+  const [legendPos, setLegendPos] = useState<{ top: number; left: number }>(() => {
+    const saved = localStorage.getItem('deck.legendPos');
+    return saved ? JSON.parse(saved) : { top: 64, left: 12 };
+  });
+  const [controlsPos, setControlsPos] = useState<{ top: number; left: number }>(() => {
+    const saved = localStorage.getItem('deck.controlsPos');
+    return saved ? JSON.parse(saved) : { top: 120, left: 12 };
+  });
+  const [legendCollapsed, setLegendCollapsed] = useState<boolean>(() => {
+    const saved = localStorage.getItem('deck.legendCollapsed');
+    return saved ? JSON.parse(saved) : false;
+  });
   // Pulse animation for alert markers.  The value cycles from 0 to 59 and is
   // used to modulate marker radius, creating a subtle pulsing effect.  A
   // relatively small interval ensures smooth animation without heavy CPU usage.
@@ -98,6 +117,154 @@ export function ExecutiveMapDeck({ className = '', alerts, onAlertSelect, focuse
     }, 100);
     return () => clearInterval(pulseInterval);
   }, []);
+
+  // Initialize default positions after mount so elements start at right side without overlap
+  useEffect(() => {
+    const mapEl = containerRef.current;
+    const legEl = legendRef.current;
+    const ctlEl = controlsRef.current;
+    if (!mapEl) return;
+    const mapRect = mapEl.getBoundingClientRect();
+    if (legEl) {
+      const r = legEl.getBoundingClientRect();
+      const within = {
+        top: Math.max(MARGIN, Math.min(legendPos.top, mapRect.height - r.height - MARGIN)),
+        left: Math.max(MARGIN, Math.min(legendPos.left, mapRect.width - r.width - MARGIN))
+      };
+      // Auto-place if not saved, else clamp saved into bounds
+      if (!localStorage.getItem('deck.legendPos')) {
+        within.top = 64;
+        within.left = Math.max(MARGIN, mapRect.width - r.width - MARGIN);
+      }
+      setLegendPos(within);
+      localStorage.setItem('deck.legendPos', JSON.stringify(within));
+    }
+    if (ctlEl) {
+      const r = ctlEl.getBoundingClientRect();
+      const within = {
+        top: Math.max(MARGIN, Math.min(controlsPos.top, mapRect.height - r.height - MARGIN)),
+        left: Math.max(MARGIN, Math.min(controlsPos.left, mapRect.width - r.width - MARGIN))
+      };
+      if (!localStorage.getItem('deck.controlsPos')) {
+        within.top = Math.max(MARGIN, mapRect.height / 2 - r.height / 2);
+        within.left = Math.max(MARGIN, mapRect.width - r.width - MARGIN);
+      }
+      setControlsPos(within);
+      localStorage.setItem('deck.controlsPos', JSON.stringify(within));
+    }
+    // re-evaluate on window resize
+    const onResize = () => {
+      const mapRect2 = mapEl.getBoundingClientRect();
+      if (legEl) {
+        const r2 = legEl.getBoundingClientRect();
+        setLegendPos(pos => {
+          const next = { top: pos.top, left: Math.min(pos.left, Math.max(8, mapRect2.width - r2.width - 12)) };
+          localStorage.setItem('deck.legendPos', JSON.stringify(next));
+          return next;
+        });
+      }
+      if (ctlEl) {
+        const r2 = ctlEl.getBoundingClientRect();
+        setControlsPos(pos => {
+          const next = { top: pos.top, left: Math.min(pos.left, Math.max(8, mapRect2.width - r2.width - 12)) };
+          localStorage.setItem('deck.controlsPos', JSON.stringify(next));
+          return next;
+        });
+      }
+    };
+    window.addEventListener('resize', onResize);
+    // keyboard shortcut: Shift+R to reset layout
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key.toLowerCase() === 'r' && ev.shiftKey) {
+        const mapRect3 = mapEl.getBoundingClientRect();
+        if (legEl) {
+          const r3 = legEl.getBoundingClientRect();
+          const next = { top: 64, left: Math.max(MARGIN, mapRect3.width - r3.width - MARGIN) };
+          setLegendPos(next);
+          localStorage.setItem('deck.legendPos', JSON.stringify(next));
+        }
+        if (ctlEl) {
+          const r3 = ctlEl.getBoundingClientRect();
+          const next = { top: Math.max(MARGIN, mapRect3.height / 2 - r3.height / 2), left: Math.max(MARGIN, mapRect3.width - r3.width - MARGIN) };
+          setControlsPos(next);
+          localStorage.setItem('deck.controlsPos', JSON.stringify(next));
+        }
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, []);
+
+  // Generic drag handler factory for overlays
+  function snapToGrid(value: number, grid = 8) {
+    return Math.round(value / grid) * grid;
+  }
+
+  function maybeSnapToCorner(pos: { top: number; left: number }, el: HTMLDivElement, mapRect: DOMRect) {
+    const rect = el.getBoundingClientRect();
+    const w = rect.width;
+    const h = rect.height;
+    const corners = [
+      { top: MARGIN, left: MARGIN },
+      { top: MARGIN, left: mapRect.width - w - MARGIN },
+      { top: mapRect.height - h - MARGIN, left: MARGIN },
+      { top: mapRect.height - h - MARGIN, left: mapRect.width - w - MARGIN }
+    ];
+    const nearest = corners.reduce((best, c) => {
+      const dist = Math.hypot(pos.left - c.left, pos.top - c.top);
+      return dist < best.dist ? { dist, corner: c } : best;
+    }, { dist: Number.POSITIVE_INFINITY, corner: corners[0] });
+    if (nearest.dist <= CORNER_SNAP_THRESHOLD) {
+      return nearest.corner;
+    }
+    return pos;
+  }
+
+  function makeDragStartHandler(ref: React.RefObject<HTMLDivElement>, setPos: (p: { top: number; left: number }) => void) {
+    return (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const el = ref.current;
+      const mapEl = containerRef.current;
+      if (!el || !mapEl) return;
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const mapRect = mapEl.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      const originLeft = elRect.left - mapRect.left;
+      const originTop = elRect.top - mapRect.top;
+      const onMove = (ev: MouseEvent) => {
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+        const newLeft = Math.max(0, Math.min(mapRect.width - elRect.width, originLeft + dx));
+        const newTop = Math.max(0, Math.min(mapRect.height - elRect.height, originTop + dy));
+        setPos({ top: newTop, left: newLeft });
+      };
+      const onUp = () => {
+        // snap and persist on drop
+        const mapRect2 = mapEl.getBoundingClientRect();
+        const current = ref.current?.getBoundingClientRect();
+        if (current) {
+          let left = snapToGrid(current.left - mapRect2.left);
+          let top = snapToGrid(current.top - mapRect2.top);
+          // corner magnet
+          const snapped = maybeSnapToCorner({ top, left }, ref.current!, mapRect2);
+          top = snapped.top;
+          left = snapped.left;
+          setPos({ top, left });
+          const key = ref === legendRef ? 'deck.legendPos' : 'deck.controlsPos';
+          localStorage.setItem(key, JSON.stringify({ top, left }));
+        }
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+      };
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+    };
+  }
   // Generate mock data once
   // Generate smaller datasets to improve performance and avoid WebGL
   // memory exhaustion.  Reducing the number of points does not materially
@@ -119,6 +286,130 @@ export function ExecutiveMapDeck({ className = '', alerts, onAlertSelect, focuse
     }, 300);
     return () => clearInterval(interval);
   }, []);
+
+  // ---- Derived metrics for Legend ----
+  const CORNER_SNAP_THRESHOLD = 48; // px proximity to corner to magnet
+  const MARGIN = 12; // panel margins inside map bounds
+
+  function toKmDistance([lon1, lat1]: [number, number], [lon2, lat2]: [number, number]): number {
+    const R = 6371; // km
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  const alertCounts = useMemo(() => {
+    const counts = { critical: 0, high: 0, medium: 0, low: 0, info: 0 } as Record<string, number>;
+    (alerts || []).forEach(a => {
+      counts[a.severity] = (counts[a.severity] || 0) + 1;
+    });
+    return counts;
+  }, [alerts]);
+
+  const layerStats = useMemo(() => {
+    switch (currentLayer) {
+      case 'geojson': {
+        const coords = baltimorePolygon.geometry.coordinates[0] as [number, number][];
+        const west = coords[0][0];
+        const south = coords[0][1];
+        const east = coords[1][0];
+        const north = coords[2][1];
+        const widthKm = toKmDistance([west, centerLat], [east, centerLat]);
+        const heightKm = toKmDistance([centerLon, south], [centerLon, north]);
+        const areaKm2 = Math.round(widthKm * heightKm);
+        return {
+          title: 'Districts',
+          items: [
+            { label: 'Coverage area', value: `${areaKm2.toLocaleString()} km²` },
+            { label: 'Bounds', value: `${widthKm.toFixed(1)} × ${heightKm.toFixed(1)} km` }
+          ]
+        };
+      }
+      case 'heatmap': {
+        const count = heatmapData.length;
+        const avg = heatmapData.reduce((s, p) => s + p.weight, 0) / Math.max(1, count);
+        const max = Math.max(...heatmapData.map(p => p.weight));
+        return {
+          title: 'Heatmap',
+          items: [
+            { label: 'Input points', value: count.toLocaleString() },
+            { label: 'Avg weight', value: avg.toFixed(2) },
+            { label: 'Max weight', value: max.toFixed(2) }
+          ]
+        };
+      }
+      case 'hexagon': {
+        const radiusM = 700;
+        const approxBins = Math.max(1, Math.round(heatmapData.length / 6));
+        return {
+          title: 'Hex Bins',
+          items: [
+            { label: 'Input points', value: heatmapData.length.toLocaleString() },
+            { label: 'Cell radius', value: `${(radiusM / 1000).toFixed(1)} km` },
+            { label: 'Est. bins', value: approxBins.toLocaleString() }
+          ]
+        };
+      }
+      case 'lines': {
+        const count = flightPaths.length;
+        const avgWidth = flightPaths.reduce((s, f) => s + f.value, 0) / Math.max(1, count);
+        const avgLenKm =
+          flightPaths.reduce((s, f) => s + toKmDistance(f.sourcePosition, f.targetPosition), 0) /
+          Math.max(1, count);
+        return {
+          title: 'Flights',
+          items: [
+            { label: 'Paths', value: count.toLocaleString() },
+            { label: 'Avg width', value: avgWidth.toFixed(1) },
+            { label: 'Avg length', value: `${avgLenKm.toFixed(1)} km` }
+          ]
+        };
+      }
+      case 'scatter': {
+        const count = scatterData.length;
+        const totalPop = scatterData.reduce((s, p) => s + p.population, 0);
+        const avgPop = totalPop / Math.max(1, count);
+        return {
+          title: 'Population',
+          items: [
+            { label: 'Samples', value: count.toLocaleString() },
+            { label: 'Total', value: Math.round(totalPop).toLocaleString() },
+            { label: 'Avg/sample', value: Math.round(avgPop).toLocaleString() }
+          ]
+        };
+      }
+      case 'trips': {
+        const count = tripsData.length;
+        const avgPoints =
+          tripsData.reduce((s, t) => s + t.waypoints.length, 0) / Math.max(1, count);
+        // Approximate average route length
+        const avgLenKm =
+          tripsData.reduce((sum, t) => {
+            let acc = 0;
+            for (let i = 1; i < t.waypoints.length; i++) {
+              acc += toKmDistance(t.waypoints[i - 1], t.waypoints[i]);
+            }
+            return sum + acc;
+          }, 0) / Math.max(1, count);
+        return {
+          title: 'Trips',
+          items: [
+            { label: 'Routes', value: count.toLocaleString() },
+            { label: 'Avg points/route', value: avgPoints.toFixed(0) },
+            { label: 'Avg length', value: `${avgLenKm.toFixed(1)} km` }
+          ]
+        };
+      }
+      default:
+        return { title: 'Layer', items: [] as { label: string; value: string }[] };
+    }
+  }, [currentLayer, heatmapData, scatterData, flightPaths, tripsData, centerLat, centerLon]);
 
   // When a focused alert is provided, smoothly fly to its location with a higher zoom level.  This effect
   // runs whenever `focusedAlert` changes.  The transitionDuration property enables a smooth animation.
@@ -178,55 +469,34 @@ export function ExecutiveMapDeck({ className = '', alerts, onAlertSelect, focuse
       })
     );
 
-    // Alert markers layer: display locations of alerts on the map.  We use a ScatterplotLayer
-    // for simplicity; each alert is drawn as a small colored circle.  Clicking a marker
-    // triggers the onAlertSelect callback with the alert object.
+    // Prepare alert markers layer (added after other layers so it renders on top)
+    let alertLayer: ScatterplotLayer | null = null;
     if (alerts && alerts.length) {
-      // Map severities to RGBA colours
       const severityColors: Record<string, [number, number, number, number]> = {
-        critical: [220, 38, 38, 200], // red
-        high: [252, 165, 3, 200],     // orange
-        medium: [234, 179, 8, 200],   // yellow
-        low: [59, 130, 246, 200],     // blue
-        info: [16, 185, 129, 200]     // green
+        critical: [220, 38, 38, 200],
+        high: [252, 165, 3, 200],
+        medium: [234, 179, 8, 200],
+        low: [59, 130, 246, 200],
+        info: [16, 185, 129, 200]
       };
-      baseLayers.push(
-        new ScatterplotLayer({
-          id: 'alert-markers',
-          data: alerts.filter(a => a.location),
-          getPosition: (a: Alert) => [a.location!.longitude, a.location!.latitude],
-          getFillColor: (a: Alert) => severityColors[a.severity] || severityColors['medium'],
-          // Increase marker size and add a pulse animation.  The pulse cycles between 0
-          // and 1 using the alertPulse state to modulate the marker radius.  This
-          // draws attention to alerts without overwhelming the map.
-          getRadius: () => {
-            const pulse = Math.sin((alertPulse / 60) * Math.PI * 2) * 0.5 + 0.5;
-            return 8 + pulse * 6;
-          },
-          radiusUnits: 'pixels',
-          pickable: true,
-          onClick: info => {
-            const alert = info.object as Alert;
-            if (alert && onAlertSelect) onAlertSelect(alert);
-          },
-          // Provide a tooltip on hover with alert details.  A small HTML template
-          // shows the title, severity, description and timestamp.  Styling is kept
-          // inline for simplicity.
-          getTooltip: (info: any) => {
-            if (!info.object) return null;
-            const a = info.object as Alert;
-            const date = new Date(a.timestamp).toLocaleString();
-            return {
-              html: `<div style="max-width:260px;padding:6px;background-color:rgba(15,23,42,0.85);color:#e5e7eb;border-radius:6px;font-size:12px;">
-                      <div style="font-weight:600;margin-bottom:2px;">${a.title}</div>
-                      <div><strong>Severity:</strong> ${a.severity}</div>
-                      <div style="margin-top:2px;">${a.description}</div>
-                      <div style="margin-top:2px;font-size:10px;color:#94a3b8;">${date}</div>
-                    </div>`
-            };
-          }
-        })
-      );
+      alertLayer = new ScatterplotLayer({
+        id: 'alert-markers',
+        data: alerts.filter(a => a.location),
+        getPosition: (a: Alert) => [a.location!.longitude, a.location!.latitude],
+        getFillColor: (a: Alert) => severityColors[a.severity] || severityColors['medium'],
+        getRadius: () => {
+          const pulse = Math.sin((alertPulse / 60) * Math.PI * 2) * 0.5 + 0.5;
+          return 8 + pulse * 6; // 8–14 px
+        },
+        updateTriggers: { getRadius: alertPulse },
+        radiusUnits: 'pixels',
+        parameters: { depthTest: false }, // ensure markers draw above extruded layers
+        pickable: true,
+        onClick: info => {
+          const alert = info.object as Alert;
+          if (alert && onAlertSelect) onAlertSelect(alert);
+        }
+      });
     }
     switch (currentLayer) {
       case 'geojson':
@@ -328,20 +598,47 @@ export function ExecutiveMapDeck({ className = '', alerts, onAlertSelect, focuse
         );
         break;
     }
+    // Add selected analytical layer
+    // ... existing switch above builds into baseLayers
+
+    // Finally add alert markers so they render on top
+    if (alertLayer) baseLayers.push(alertLayer);
+
     return baseLayers;
-  }, [currentLayer, heatmapData, scatterData, flightPaths, tripsData]);
+  }, [currentLayer, heatmapData, scatterData, flightPaths, tripsData, alerts, alertPulse, onAlertSelect]);
   return (
-    <div className={`relative w-full h-full ${className}`} style={{ backgroundColor: '#0f172a' }}>
+    <div ref={containerRef} className={`relative w-full h-full ${className}`} style={{ backgroundColor: '#0f172a' }}>
       <DeckGL
         viewState={viewState}
         onViewStateChange={({ viewState }) => setViewState(viewState)}
         controller={true}
         layers={layers}
+        getTooltip={(info: any) => {
+          if (info.layer && info.layer.id === 'alert-markers' && info.object) {
+            const a = info.object as Alert;
+            const date = new Date(a.timestamp).toLocaleString();
+            return {
+              html: `<div style="max-width:260px;padding:6px;background-color:rgba(15,23,42,0.85);color:#e5e7eb;border-radius:6px;font-size:12px;">
+                      <div style="font-weight:600;margin-bottom:2px;">${a.title}</div>
+                      <div><strong>Severity:</strong> ${a.severity}</div>
+                      <div style="margin-top:2px;">${a.description}</div>
+                      <div style="margin-top:2px;font-size:10px;color:#94a3b8;">${date}</div>
+                    </div>`
+            } as any;
+          }
+          return null;
+        }}
       />
       {/* Layer selection controls */}
       <div
-        className="absolute top-3 left-3 z-20 flex flex-col md:flex-row gap-2 p-1 bg-slate-900/70 backdrop-blur-md rounded-lg border border-cyan-400/30"
-        style={{ boxShadow: '0 0 15px rgba(6,182,212,0.3)' }}
+        ref={controlsRef}
+        className="absolute z-30 flex flex-col gap-2 p-1 bg-slate-900/70 backdrop-blur-md rounded-lg border border-cyan-400/30 cursor-move"
+        style={{
+          boxShadow: '0 0 15px rgba(6,182,212,0.3)',
+          top: controlsPos.top,
+          left: controlsPos.left
+        }}
+        onMouseDown={makeDragStartHandler(controlsRef, setControlsPos)}
       >
         {(['geojson', 'heatmap', 'hexagon', 'lines', 'scatter', 'trips'] as LayerType[]).map(layer => (
           <button
@@ -353,69 +650,117 @@ export function ExecutiveMapDeck({ className = '', alerts, onAlertSelect, focuse
             {LAYER_LABELS[layer]}
           </button>
         ))}
-      </div>
-      {/* Map legend */}
-      <div
-        className="absolute bottom-3 left-3 z-20 p-2 bg-slate-900/70 backdrop-blur-md rounded-lg border border-cyan-400/30 text-xs text-slate-200 space-y-2"
-        style={{ boxShadow: '0 0 10px rgba(6,182,212,0.25)', maxWidth: '240px' }}
-      >
-        {/* Legend title */}
-        <div className="font-semibold text-cyan-300 mb-1">Legend</div>
-        {/* Alerts legend with severity colours */}
-        <div className="flex flex-col">
-          <div className="font-medium mb-1">Alerts</div>
-          <div className="grid grid-cols-3 gap-x-2 gap-y-1">
-            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'rgb(220,38,38)' }}></span><span>Critical</span></div>
-            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'rgb(252,165,3)' }}></span><span>High</span></div>
-            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'rgb(234,179,8)' }}></span><span>Medium</span></div>
-            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'rgb(59,130,246)' }}></span><span>Low</span></div>
-            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'rgb(16,185,129)' }}></span><span>Info</span></div>
-          </div>
+        <div className="mt-1 flex gap-1">
+          <button
+            className="px-2 py-1 text-[10px] rounded bg-slate-800/60 text-cyan-200 hover:bg-slate-700/60"
+            title="Snap panels to nearest corners"
+            onClick={() => {
+              const mapEl = containerRef.current;
+              if (!mapEl) return;
+              const mapRect = mapEl.getBoundingClientRect();
+              const legEl = legendRef.current!;
+              const ctlEl = controlsRef.current!;
+              if (legEl) {
+                const next = maybeSnapToCorner(legendPos, legEl, mapRect);
+                setLegendPos(next);
+                localStorage.setItem('deck.legendPos', JSON.stringify(next));
+              }
+              if (ctlEl) {
+                const next = maybeSnapToCorner(controlsPos, ctlEl, mapRect);
+                setControlsPos(next);
+                localStorage.setItem('deck.controlsPos', JSON.stringify(next));
+              }
+            }}
+          >
+            Snap
+          </button>
+          <button
+            className="px-2 py-1 text-[10px] rounded bg-slate-800/60 text-rose-200 hover:bg-slate-700/60"
+            title="Reset panel layout"
+            onClick={() => {
+              const mapEl = containerRef.current;
+              if (!mapEl) return;
+              const mapRect = mapEl.getBoundingClientRect();
+              const legEl = legendRef.current;
+              const ctlEl = controlsRef.current;
+              if (legEl) {
+                const r = legEl.getBoundingClientRect();
+                const next = { top: 64, left: Math.max(MARGIN, mapRect.width - r.width - MARGIN) };
+                setLegendPos(next);
+                localStorage.setItem('deck.legendPos', JSON.stringify(next));
+              }
+              if (ctlEl) {
+                const r = ctlEl.getBoundingClientRect();
+                const next = { top: Math.max(MARGIN, mapRect.height / 2 - r.height / 2), left: Math.max(MARGIN, mapRect.width - r.width - MARGIN) };
+                setControlsPos(next);
+                localStorage.setItem('deck.controlsPos', JSON.stringify(next));
+              }
+            }}
+          >
+            Reset
+          </button>
         </div>
-        {/* Layers legend */}
-        <div className="flex flex-col space-y-1 mt-2">
-          {(['geojson', 'heatmap', 'hexagon', 'lines', 'scatter', 'trips'] as LayerType[]).map(layer => {
-            let indicator: JSX.Element;
-            // Determine indicator style based on layer
-            switch (layer) {
-              case 'heatmap':
-                indicator = (
-                  <span className="w-4 h-3 bg-gradient-to-r from-red-500 via-yellow-400 to-green-400 rounded-sm"></span>
-                );
-                break;
-              case 'hexagon':
-                indicator = (
-                  <span className="w-4 h-3 bg-purple-600 rounded-sm"></span>
-                );
-                break;
-              case 'lines':
-                indicator = (
-                  <span className="w-4 h-0.5 bg-yellow-500 block"></span>
-                );
-                break;
-              case 'scatter':
-                indicator = (
-                  <span className="w-3 h-3 bg-green-500 rounded-full"></span>
-                );
-                break;
-              case 'trips':
-                indicator = (
-                  <span className="w-4 h-0.5 bg-blue-500 block"></span>
-                );
-                break;
-              case 'geojson':
-              default:
-                indicator = (
-                  <span className="w-4 h-3 bg-cyan-400 rounded-sm"></span>
-                );
-            }
-            return (
-              <div key={layer} className="flex items-center gap-2">
-                {indicator}
-                <span className={currentLayer === layer ? 'text-white font-semibold' : ''}>{LAYER_LABELS[layer]}</span>
-              </div>
-            );
-          })}
+      </div>
+      {/* Map legend (click-through container with data summary for current overlay) */}
+      <div
+        ref={legendRef}
+        className="absolute z-10 pointer-events-none"
+        style={{ maxWidth: '280px', top: legendPos.top, left: legendPos.left }}
+        onMouseDown={makeDragStartHandler(legendRef, setLegendPos)}
+      >
+        {/* legend box is interactive; higher contrast for readability */}
+        <div
+          className="rounded-lg border shadow-xl pointer-events-auto text-sm select-none"
+          style={{
+            backgroundColor: 'rgba(2,6,23,0.92)',
+            borderColor: LAYER_COLORS[currentLayer],
+            color: '#fde68a'
+          }}
+        >
+          <div className="flex items-center justify-between gap-3 px-3 pt-3 pb-2 cursor-move"
+               onMouseDown={makeDragStartHandler(legendRef, setLegendPos)}>
+            <div className="font-semibold tracking-wide">Legend</div>
+            <div className="flex items-center gap-2">
+              <span className="inline-block rounded-sm" style={{ width: 16, height: 8, backgroundColor: LAYER_COLORS[currentLayer] }} />
+              <div className="text-xs uppercase" style={{ color: '#a7f3d0' }}>{LAYER_LABELS[currentLayer]}</div>
+              <button
+                aria-label={legendCollapsed ? 'Expand legend' : 'Collapse legend'}
+                className="ml-1 text-xs px-2 py-0.5 rounded bg-slate-800/70 text-cyan-200 hover:bg-slate-700/70 cursor-pointer"
+                onClick={(e) => { e.stopPropagation(); setLegendCollapsed(v => { const nv = !v; localStorage.setItem('deck.legendCollapsed', JSON.stringify(nv)); return nv; }); }}
+              >
+                {legendCollapsed ? '▾' : '▴'}
+              </button>
+            </div>
+          </div>
+
+          <AnimatePresence initial={false} mode="wait">
+            {!legendCollapsed && (
+              <motion.div
+                key={currentLayer}
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 6 }}
+                transition={{ duration: 0.2 }}
+                className="px-3 pb-3"
+              >
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                  {layerStats.items.map(item => (
+                    <div key={item.label} className="flex items-center justify-between gap-3">
+                      <span className="text-[12px]" style={{ color: '#93c5fd' }}>{item.label}</span>
+                      <motion.span
+                        className="font-semibold"
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        {item.value}
+                      </motion.span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>

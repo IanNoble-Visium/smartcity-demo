@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  AreaChart,
   Area,
   Line,
   XAxis,
@@ -9,9 +8,10 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer
+  ResponsiveContainer,
+  ComposedChart
 } from 'recharts';
-import { useDataStore } from '../store';
+// import { useDataStore } from '../store';
 import { ContextualVideoBackground } from './VideoBackground';
 import { ChartErrorBoundary } from './ErrorBoundary';
 
@@ -47,10 +47,16 @@ interface MLModel {
 }
 
 export function AnomalyDetectionEngine({ className = '' }: AnomalyDetectionEngineProps) {
-  const { metrics } = useDataStore();
-  const [selectedModel, setSelectedModel] = useState<string>('ensemble');
-  const [timeWindow, setTimeWindow] = useState<'1h' | '4h' | '24h' | '7d'>('24h');
-  const [severityFilter, setSeverityFilter] = useState<string>('all');
+  // Avoid subscribing to global metrics to prevent periodic re-renders
+  const [selectedModel, setSelectedModel] = useState<string>(() => localStorage.getItem('ml.selectedModel') || 'ensemble');
+  const [timeWindow, setTimeWindow] = useState<'1h' | '4h' | '24h' | '7d'>(() => (localStorage.getItem('ml.timeWindow') as any) || '24h');
+  const [severityFilter, setSeverityFilter] = useState<string>(() => localStorage.getItem('ml.severity') || 'all');
+  const [isAnomalyListExpanded, setIsAnomalyListExpanded] = useState<boolean>(() => JSON.parse(localStorage.getItem('ml.listExpanded') || 'true'));
+  const [selectedAnomaly, setSelectedAnomaly] = useState<Anomaly | null>(null);
+  const [modelCategory, setModelCategory] = useState<'all' | 'predictive' | 'statistical' | 'network'>(() => (localStorage.getItem('ml.modelCategory') as any) || 'all');
+
+  // Persist key states
+  const persist = (key: string, value: any) => localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
 
   // Mock ML Models
   const mlModels = useMemo((): MLModel[] => [
@@ -96,10 +102,18 @@ export function AnomalyDetectionEngine({ className = '' }: AnomalyDetectionEngin
     }
   ], []);
 
-  // Generate mock anomalies
-  const detectedAnomalies = useMemo((): Anomaly[] => {
-    if (!metrics) return [];
+  const categorizedModels = useMemo(() => {
+    const categories: Record<string, MLModel[]> = {
+      predictive: mlModels.filter(m => ['lstm', 'autoencoder'].includes(m.type)),
+      statistical: mlModels.filter(m => ['isolation_forest', 'svm', 'ensemble'].includes(m.type)),
+      network: mlModels.filter(m => ['ensemble', 'isolation_forest'].includes(m.type)),
+      all: mlModels
+    };
+    return categories as Record<'predictive' | 'statistical' | 'network' | 'all', MLModel[]>;
+  }, [mlModels]);
 
+  // Generate mock anomalies - static to prevent unnecessary re-renders
+  const detectedAnomalies = useMemo((): Anomaly[] => {
     const anomalies: Anomaly[] = [
       {
         id: 'anom-001',
@@ -107,8 +121,8 @@ export function AnomalyDetectionEngine({ className = '' }: AnomalyDetectionEngin
         type: 'statistical',
         severity: 'high',
         metric: 'Traffic Flow',
-        value: metrics.trafficFlow * 0.3,
-        expectedValue: metrics.trafficFlow,
+        value: 0.21,
+        expectedValue: 0.70,
         deviation: 70,
         confidence: 96.5,
         description: 'Significant drop in traffic flow detected on I-95 corridor',
@@ -126,8 +140,8 @@ export function AnomalyDetectionEngine({ className = '' }: AnomalyDetectionEngin
         type: 'behavioral',
         severity: 'medium',
         metric: 'Energy Consumption',
-        value: metrics.energyConsumption * 1.4,
-        expectedValue: metrics.energyConsumption,
+        value: 105.6,
+        expectedValue: 75.4,
         deviation: 40,
         confidence: 89.2,
         description: 'Unusual energy consumption pattern in downtown district',
@@ -144,8 +158,8 @@ export function AnomalyDetectionEngine({ className = '' }: AnomalyDetectionEngin
         type: 'pattern',
         severity: 'critical',
         metric: 'Network Latency',
-        value: metrics.networkLatency * 3.2,
-        expectedValue: metrics.networkLatency,
+        value: 160.8,
+        expectedValue: 50.2,
         deviation: 220,
         confidence: 98.7,
         description: 'Severe network latency spike across multiple nodes',
@@ -163,8 +177,8 @@ export function AnomalyDetectionEngine({ className = '' }: AnomalyDetectionEngin
         type: 'predictive',
         severity: 'low',
         metric: 'Air Quality',
-        value: metrics.airQuality * 1.15,
-        expectedValue: metrics.airQuality,
+        value: 57.5,
+        expectedValue: 50.0,
         deviation: 15,
         confidence: 76.3,
         description: 'Predicted air quality degradation based on weather patterns',
@@ -178,7 +192,7 @@ export function AnomalyDetectionEngine({ className = '' }: AnomalyDetectionEngin
     ];
 
     return anomalies;
-  }, [metrics]);
+  }, []); // Remove metrics dependency to prevent re-renders
 
   // Filter anomalies based on severity
   const filteredAnomalies = useMemo(() => {
@@ -187,7 +201,7 @@ export function AnomalyDetectionEngine({ className = '' }: AnomalyDetectionEngin
   }, [detectedAnomalies, severityFilter]);
 
   // Generate time series data with anomalies
-  const generateAnomalyTimeSeriesData = () => {
+  const timeSeriesData = useMemo(() => {
     const data = [];
     const now = new Date();
     
@@ -195,40 +209,34 @@ export function AnomalyDetectionEngine({ className = '' }: AnomalyDetectionEngin
       const timestamp = new Date(now.getTime() - i * 60 * 60 * 1000);
       const baseValue = 50 + Math.sin(i * 0.5) * 20;
       const noise = (Math.random() - 0.5) * 10;
+      const normalValue = Math.max(0, baseValue + noise);
       
       // Add anomalies at specific points
-      let isAnomaly = false;
-      let anomalyValue = baseValue + noise;
-      
+      let anomalyValue = null;
       if (i === 15 || i === 8 || i === 3) {
-        isAnomaly = true;
-        anomalyValue = baseValue + (Math.random() > 0.5 ? 40 : -30);
+        anomalyValue = Math.max(0, baseValue + (Math.random() > 0.5 ? 40 : -30));
       }
       
       data.push({
         time: timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-        value: baseValue + noise,
-        anomaly: isAnomaly ? anomalyValue : null,
-        upperBound: baseValue + 25,
-        lowerBound: baseValue - 25
+        value: normalValue,
+        anomaly: anomalyValue
       });
     }
     
     return data;
-  };
-
-  const timeSeriesData = generateAnomalyTimeSeriesData();
+  }, [timeWindow]);
 
   // Model Performance Component
   const ModelPerformance = () => (
-    <div className="card">
-      <div className="card-header">
-        <h3 className="card-title">ML Model Performance</h3>
-        <div className="flex items-center gap-2">
-          <select 
-            value={selectedModel} 
+    <div className="card h-full flex flex-col">
+      <div className="card-header flex-shrink-0 p-2">
+        <h3 className="card-title text-xs">ML Model Performance</h3>
+        <div className="flex items-center gap-1">
+          <select
+            value={selectedModel}
             onChange={(e) => setSelectedModel(e.target.value)}
-            className="btn btn-ghost text-xs"
+            className="btn btn-ghost text-xs px-1 py-0.5"
           >
             {mlModels.map(model => (
               <option key={model.id} value={model.id}>{model.name}</option>
@@ -236,30 +244,32 @@ export function AnomalyDetectionEngine({ className = '' }: AnomalyDetectionEngin
           </select>
         </div>
       </div>
-      
-      <div className="card-content">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+
+      <div className="card-content flex-1 min-h-0 p-1 overflow-y-auto">
+        <div className="grid grid-cols-1 gap-1">
           {mlModels.map((model) => (
-            <div 
-              key={model.id} 
-              className={`p-3 rounded-lg cursor-pointer transition-all ${
+            <div
+              key={model.id}
+              className={`p-1.5 rounded cursor-pointer transition-all text-xs ${
                 selectedModel === model.id ? 'bg-primary/20 border border-primary' : 'bg-secondary'
               }`}
               onClick={() => setSelectedModel(model.id)}
             >
-              <div className="text-sm font-medium">{model.name}</div>
-              <div className="text-xs text-muted mb-2">{model.type.replace('_', ' ').toUpperCase()}</div>
-              <div className="flex items-center justify-between">
-                <span className="text-lg font-bold text-primary">{model.accuracy}%</span>
-                <span className={`status-indicator ${
-                  model.status === 'ready' ? 'status-success' : 
+              <div className="flex items-center justify-between mb-0.5">
+                <div className="font-medium truncate flex-1 mr-1 text-xs">{model.name}</div>
+                <span className={`status-indicator text-xs px-1 py-0.5 ${
+                  model.status === 'ready' ? 'status-success' :
                   model.status === 'training' ? 'status-warning' : 'status-error'
                 }`}>
                   {model.status}
                 </span>
               </div>
-              <div className="text-xs text-muted mt-1">
-                {model.anomaliesDetected} anomalies detected
+              <div className="text-xs text-muted mb-0.5">{model.type.replace('_', ' ').toUpperCase()}</div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-primary">{model.accuracy}%</span>
+                <span className="text-xs text-muted">
+                  {model.anomaliesDetected} anomalies
+                </span>
               </div>
             </div>
           ))}
@@ -270,92 +280,80 @@ export function AnomalyDetectionEngine({ className = '' }: AnomalyDetectionEngin
 
   // Anomaly Timeline Chart
   const AnomalyTimeline = () => (
-    <div className="card">
-      <div className="card-header">
-        <h3 className="card-title">Real-time Anomaly Detection</h3>
-        <div className="flex items-center gap-2">
-          <select 
-            value={timeWindow} 
+    <div className="card h-full flex flex-col">
+      <div className="card-header flex-shrink-0 p-2">
+        <h3 className="card-title text-xs">Real-time Anomaly Detection</h3>
+        <div className="flex items-center gap-1">
+          <select
+            value={timeWindow}
             onChange={(e) => setTimeWindow(e.target.value as typeof timeWindow)}
-            className="btn btn-ghost text-xs"
+            className="btn btn-ghost text-xs px-1 py-0.5"
           >
             <option value="1h">Last Hour</option>
             <option value="4h">Last 4 Hours</option>
             <option value="24h">Last 24 Hours</option>
             <option value="7d">Last 7 Days</option>
           </select>
-          <span className="status-indicator status-success">Live</span>
+          <span className="status-indicator status-success text-xs px-1 py-0.5">Live</span>
         </div>
       </div>
-      
-      <div className="card-content" style={{ minHeight: '400px' }}>
+
+      <div className="card-content flex-1 min-h-0 p-1">
         <ChartErrorBoundary>
           <ResponsiveContainer
             width="100%"
-            height={400}
-            minWidth={300}
-            minHeight={400}
+            height="100%"
+            minWidth={200}
+            minHeight={150}
           >
-            <AreaChart data={timeSeriesData}>
+            <ComposedChart data={timeSeriesData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis
                 dataKey="time"
                 stroke="#9ca3af"
-                fontSize={12}
+                fontSize={9}
+                tick={{ fontSize: 9 }}
+                height={20}
               />
               <YAxis
                 stroke="#9ca3af"
-                fontSize={12}
+                fontSize={9}
+                tick={{ fontSize: 9 }}
+                width={30}
               />
               <Tooltip
                 contentStyle={{
                   backgroundColor: '#1f2937',
                   border: '1px solid #374151',
-                  borderRadius: '8px',
-                  color: '#e5e7eb'
+                  borderRadius: '6px',
+                  color: '#e5e7eb',
+                  fontSize: '10px',
+                  padding: '4px 6px'
                 }}
               />
-              <Legend />
-              
-              {/* Normal data range */}
-              <Area
-                type="monotone"
-                dataKey="upperBound"
-                stackId="1"
-                stroke="none"
-                fill="#10b981"
-                fillOpacity={0.1}
-              />
-              <Area
-                type="monotone"
-                dataKey="lowerBound"
-                stackId="1"
-                stroke="none"
-                fill="#ffffff"
-                fillOpacity={1}
-              />
-              
+              <Legend wrapperStyle={{ fontSize: '9px' }} />
+
               {/* Normal values */}
               <Line
                 type="monotone"
                 dataKey="value"
                 stroke="#3b82f6"
-                strokeWidth={2}
+                strokeWidth={1.5}
                 name="Metric Value"
                 dot={false}
               />
-              
+
               {/* Anomalies */}
               <Line
                 type="monotone"
                 dataKey="anomaly"
                 stroke="#ef4444"
-                strokeWidth={3}
+                strokeWidth={2}
                 name="Detected Anomalies"
-                dot={{ fill: '#ef4444', strokeWidth: 2, r: 6 }}
+                dot={{ fill: '#ef4444', strokeWidth: 1, r: 3 }}
                 connectNulls={false}
               />
-            </AreaChart>
+            </ComposedChart>
           </ResponsiveContainer>
         </ChartErrorBoundary>
       </div>
@@ -364,14 +362,20 @@ export function AnomalyDetectionEngine({ className = '' }: AnomalyDetectionEngin
 
   // Anomaly List Component
   const AnomalyList = () => (
-    <div className="card">
-      <div className="card-header">
-        <h3 className="card-title">Detected Anomalies</h3>
-        <div className="flex items-center gap-2">
-          <select 
-            value={severityFilter} 
-            onChange={(e) => setSeverityFilter(e.target.value)}
-            className="btn btn-ghost text-xs"
+    <div className="card h-full flex flex-col">
+      <div
+        className="card-header cursor-pointer p-2 flex-shrink-0"
+        onClick={() => setIsAnomalyListExpanded(!isAnomalyListExpanded)}
+      >
+        <h3 className="card-title text-xs flex items-center gap-1">
+          Detected Anomalies
+          <span className="text-xs">{isAnomalyListExpanded ? '▼' : '▶'}</span>
+        </h3>
+        <div className="flex items-center gap-1">
+          <select
+            value={severityFilter}
+            onChange={(e) => { e.stopPropagation(); setSeverityFilter(e.target.value); }}
+            className="btn btn-ghost text-xs px-1 py-0.5"
           >
             <option value="all">All Severities</option>
             <option value="critical">Critical</option>
@@ -382,24 +386,25 @@ export function AnomalyDetectionEngine({ className = '' }: AnomalyDetectionEngin
           <span className="text-xs text-muted">{filteredAnomalies.length} anomalies</span>
         </div>
       </div>
-      
-      <div className="card-content">
-        <div className="space-y-3 max-h-96 overflow-y-auto">
+
+      {isAnomalyListExpanded && (
+        <div className="card-content p-1 flex-1 min-h-0">
+          <div className="space-y-1 h-full overflow-y-auto">
           {filteredAnomalies.map((anomaly) => (
             <motion.div
               key={anomaly.id}
-              className="p-4 bg-secondary rounded-lg border-l-4 border-l-primary"
+              className="p-1.5 bg-secondary rounded border-l-2 border-l-primary"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <div className="flex items-start justify-between mb-2">
-                <div>
-                  <h4 className="font-medium text-primary">{anomaly.metric}</h4>
-                  <p className="text-sm text-muted">{anomaly.description}</p>
+              <div className="flex items-start justify-between mb-1">
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-xs font-medium text-primary truncate">{anomaly.metric}</h4>
+                  <p className="text-xs text-muted truncate">{anomaly.description}</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className={`status-indicator ${
+                <div className="flex items-center gap-1 flex-shrink-0 ml-1">
+                  <span className={`status-indicator text-xs px-1 py-0.5 ${
                     anomaly.severity === 'critical' ? 'status-error' :
                     anomaly.severity === 'high' ? 'status-warning' :
                     anomaly.severity === 'medium' ? 'status-info' : 'status-success'
@@ -411,110 +416,93 @@ export function AnomalyDetectionEngine({ className = '' }: AnomalyDetectionEngin
                   </span>
                 </div>
               </div>
-              
-              <div className="grid grid-cols-2 gap-4 mb-3 text-sm">
+
+              <div className="grid grid-cols-4 gap-1 mb-1 text-xs">
                 <div>
-                  <span className="text-muted">Detected Value:</span>
-                  <span className="ml-2 font-medium">{anomaly.value.toFixed(2)}</span>
+                  <span className="text-muted">Det:</span>
+                  <span className="ml-1 font-medium">{anomaly.value.toFixed(1)}</span>
                 </div>
                 <div>
-                  <span className="text-muted">Expected Value:</span>
-                  <span className="ml-2 font-medium">{anomaly.expectedValue.toFixed(2)}</span>
+                  <span className="text-muted">Exp:</span>
+                  <span className="ml-1 font-medium">{anomaly.expectedValue.toFixed(1)}</span>
                 </div>
                 <div>
-                  <span className="text-muted">Deviation:</span>
-                  <span className="ml-2 font-medium text-warning">{anomaly.deviation}%</span>
+                  <span className="text-muted">Dev:</span>
+                  <span className="ml-1 font-medium text-warning">{anomaly.deviation}%</span>
                 </div>
                 <div>
-                  <span className="text-muted">Confidence:</span>
-                  <span className="ml-2 font-medium text-success">{anomaly.confidence}%</span>
+                  <span className="text-muted">Conf:</span>
+                  <span className="ml-1 font-medium text-success">{anomaly.confidence}%</span>
                 </div>
               </div>
-              
+
               {anomaly.mitreAttack && (
-                <div className="mb-3">
-                  <span className="text-xs text-muted">MITRE ATT&CK:</span>
-                  <div className="flex gap-1 mt-1">
+                <div className="mb-1">
+                  <span className="text-xs text-muted">MITRE:</span>
+                  <div className="flex gap-0.5 mt-0.5 flex-wrap">
                     {anomaly.mitreAttack.map(tactic => (
-                      <span key={tactic} className="px-2 py-1 bg-primary/20 text-primary text-xs rounded">
+                      <span key={tactic} className="px-1 py-0.5 bg-primary/20 text-primary text-xs rounded">
                         {tactic}
                       </span>
                     ))}
                   </div>
                 </div>
               )}
-              
-              <div className="mb-3">
-                <span className="text-xs text-muted">Recommendations:</span>
-                <ul className="mt-1 text-xs space-y-1">
-                  {anomaly.recommendations.map((rec, index) => (
-                    <li key={index} className="flex items-start gap-2">
-                      <span className="text-primary">•</span>
-                      <span>{rec}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              
+
               <div className="flex items-center justify-between">
-                <span className={`status-indicator ${
+                <span className={`status-indicator text-xs px-1 py-0.5 ${
                   anomaly.status === 'new' ? 'status-warning' :
                   anomaly.status === 'investigating' ? 'status-info' :
                   anomaly.status === 'resolved' ? 'status-success' : 'status-error'
                 }`}>
                   {anomaly.status.replace('_', ' ')}
                 </span>
-                <div className="flex gap-2">
-                  <button className="btn btn-ghost text-xs">Investigate</button>
-                  <button className="btn btn-ghost text-xs">Mark Resolved</button>
+                <div className="flex gap-0.5">
+                  <button className="btn btn-ghost text-xs px-1 py-0.5">Investigate</button>
+                  <button className="btn btn-ghost text-xs px-1 py-0.5">Resolve</button>
                 </div>
               </div>
             </motion.div>
           ))}
         </div>
       </div>
+      )}
     </div>
   );
 
   return (
-    <div className={`anomaly-detection-engine ${className}`}>
-      {/* Video Background */}
-      <ContextualVideoBackground
-        context="cybersecurity"
-        className="absolute inset-0 -z-10"
-        overlayOpacity={0.6}
-      />
+    <div className={`relative h-full min-h-0 overflow-hidden flex flex-col ${className}`}>
+      {/* Background */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 opacity-60" />
 
       {/* Header */}
-      <div className="relative z-10 flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-primary">AI/ML Anomaly Detection Engine</h2>
-          <p className="text-muted">Advanced machine learning for real-time anomaly detection and threat analysis</p>
+      <div className="flex items-center justify-between px-3 py-1 flex-shrink-0">
+        <div className="flex-1 min-w-0">
+          <h2 className="text-base font-bold text-primary leading-tight truncate">AI/ML Anomaly Detection Engine</h2>
+          <p className="text-xs text-muted leading-tight truncate">Advanced machine learning for real-time anomaly detection and threat analysis</p>
         </div>
-        
-        <div className="flex items-center gap-2">
-          <button className="btn btn-ghost text-xs">
-            Retrain Models
-          </button>
-          <button className="btn btn-primary text-xs">
-            Export Report
-          </button>
+        <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+          <button className="btn btn-ghost text-xs px-1 py-0.5">Retrain</button>
+          <button className="btn btn-primary text-xs px-1 py-0.5">Export</button>
         </div>
       </div>
 
-      {/* Model Performance */}
-      <div className="relative z-10 mb-6">
-        <ModelPerformance />
-      </div>
-
-      {/* Anomaly Timeline */}
-      <div className="relative z-10 mb-6">
-        <AnomalyTimeline />
-      </div>
-
-      {/* Anomaly List */}
-      <div className="relative z-10">
-        <AnomalyList />
+      {/* Content Grid: 12x12 no-scroll layout */}
+      <div className="flex-1 min-h-0 px-3 pb-2">
+        <div className="h-full min-h-0 grid grid-cols-12 grid-rows-12 gap-2">
+          {/* Model Performance */}
+          <div className="col-span-12 md:col-span-4 row-span-8 min-h-0">
+            <ModelPerformance />
+          </div>
+          {/* Anomaly Timeline */}
+          <div className="col-span-12 md:col-span-8 row-span-8 min-h-0">
+            <AnomalyTimeline />
+          </div>
+          {/* Anomaly List */}
+          <div className="col-span-12 row-span-4 min-h-0">
+            <AnomalyList />
+          </div>
+        </div>
       </div>
     </div>
   );
