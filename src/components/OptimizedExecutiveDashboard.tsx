@@ -305,8 +305,9 @@ export function OptimizedExecutiveDashboard({
               </div>
             </div>
           </div>
-          {/* Alert detail panel occupies 4 columns */}
-          <div className="col-span-4">
+          {/* Alert detail panel occupies 4 columns. To prevent the grid row from collapsing when there is no
+             selected alert, give this cell a full height container with a subtle background and border. */}
+          <div className="col-span-4 h-full bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden">
             <AlertDetailInline alert={selectedAlert} onClose={() => setSelectedAlert(null)} />
           </div>
         </div>
