@@ -206,7 +206,8 @@ export function OptimizedExecutiveDashboard({
             </div>
             <div className="p-3 flex-1 overflow-y-auto">
               {(() => {
-                // Display up to 5 critical/high severity alerts without truncating existing ones when new alerts arrive
+                // Display all critical/high severity alerts. The panel scrolls internally to prevent
+                // it from expanding and pushing other sections off-screen when new alerts arrive.
                 const criticalAlerts = alerts.filter(a => a.severity === 'critical' || a.severity === 'high');
                 if (criticalAlerts.length === 0) {
                   return (
