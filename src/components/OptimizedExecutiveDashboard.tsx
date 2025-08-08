@@ -5,7 +5,8 @@ import { ExecutiveMapDeck } from './ExecutiveMapDeck';
 import { CrossDomainCorrelationChart } from './CrossDomainCorrelationChart';
 import { ResourceAllocationChart } from './ResourceAllocationChart';
 import { CitizenSatisfactionGauge } from './CitizenSatisfactionGauge';
-import { AlertDetailModal } from './AlertDetailModal';
+// Import the inline alert detail panel instead of always using a modal
+import { AlertDetailInline } from './AlertDetailInline';
 import { IncidentDetail } from './IncidentDetail';
 import type { Metrics, Alert, Incident } from '../types';
 
@@ -157,7 +158,8 @@ export function OptimizedExecutiveDashboard({
           </div>
         </div>
         {/* KPI Cards with collapsible option */}
-        <div className={`col-span-12 ${kpiCollapsed ? 'row-span-1' : 'row-span-2'} bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg p-3 relative`}
+        <div
+          className={`col-span-12 ${kpiCollapsed ? 'row-span-1' : 'row-span-2'} bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg p-3 relative`}
         >
           {/* Collapse/expand toggle */}
           <button
@@ -173,8 +175,8 @@ export function OptimizedExecutiveDashboard({
             <CompactKpiGrid metrics={metrics} />
           )}
         </div>
-        {/* Map area */}
-        <div className={`col-span-8 ${kpiCollapsed ? 'row-span-6' : 'row-span-5'} bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden`}>
+        {/* Main content: Map and sidebars */}
+        <div className={`col-span-8 ${kpiCollapsed ? 'row-span-5' : 'row-span-4'} bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden`}>
           <div className="h-full relative">
             {/* Map labels */}
             <div className="absolute top-2 left-2 z-10 bg-slate-900/80 backdrop-blur-md rounded px-2 py-1">
@@ -194,9 +196,9 @@ export function OptimizedExecutiveDashboard({
             />
           </div>
         </div>
-        {/* Sidebar: Alerts and Incidents */}
-        <div className={`col-span-4 ${kpiCollapsed ? 'row-span-6' : 'row-span-5'} flex flex-col space-y-2`}>
-          {/* Critical Alerts */}
+        {/* Sidebar: Critical Alerts and Recent Incidents */}
+        <div className={`col-span-4 ${kpiCollapsed ? 'row-span-5' : 'row-span-4'} flex flex-col space-y-2`}>
+          {/* Critical Alerts Panel */}
           <div className="flex-1 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden flex flex-col">
             <div className="p-3 border-b border-slate-700/50 flex items-center gap-2">
               <span className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></span>
@@ -204,7 +206,8 @@ export function OptimizedExecutiveDashboard({
             </div>
             <div className="p-3 flex-1 overflow-y-auto">
               {(() => {
-                const criticalAlerts = alerts.filter(a => a.severity === 'critical' || a.severity === 'high').slice(0, 5);
+                // Display up to 5 critical/high severity alerts without truncating existing ones when new alerts arrive
+                const criticalAlerts = alerts.filter(a => a.severity === 'critical' || a.severity === 'high');
                 if (criticalAlerts.length === 0) {
                   return (
                     <div className="text-center text-slate-400 py-6">
@@ -228,7 +231,7 @@ export function OptimizedExecutiveDashboard({
                           <span className="text-xs text-red-400 font-medium">{alert.severity.toUpperCase()}</span>
                           <span className="text-xs text-slate-400">{new Date(alert.timestamp).toLocaleTimeString()}</span>
                         </div>
-                        <div className="text-sm text-white font-medium">{alert.title}</div>
+                        <div className="text-sm text-white font-medium truncate" title={alert.title}>{alert.title}</div>
                         <div className="text-xs text-slate-300 mt-1 line-clamp-2">{alert.description}</div>
                       </div>
                     ))}
@@ -237,7 +240,7 @@ export function OptimizedExecutiveDashboard({
               })()}
             </div>
           </div>
-          {/* Recent Incidents */}
+          {/* Recent Incidents Panel */}
           <div className="flex-1 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden flex flex-col">
             <div className="p-3 border-b border-slate-700/50 flex items-center gap-2">
               <span className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></span>
@@ -264,7 +267,7 @@ export function OptimizedExecutiveDashboard({
                         }`}>{incident.severity.toUpperCase()}</span>
                         <span className="text-xs text-slate-400">{new Date(incident.startTime).toLocaleTimeString()}</span>
                       </div>
-                      <div className="text-sm text-white font-medium">{incident.summary}</div>
+                      <div className="text-sm text-white font-medium truncate" title={incident.summary}>{incident.summary}</div>
                       <div className="text-xs text-slate-300 mt-1 line-clamp-2">{incident.description}</div>
                     </div>
                   ))}
@@ -278,25 +281,32 @@ export function OptimizedExecutiveDashboard({
             </div>
           </div>
         </div>
-        {/* Analytics section */}
-        <div className="col-span-12 row-span-3 flex gap-2">
-          <div className="flex-1 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg p-3">
-            <h3 className="text-sm font-semibold text-white mb-2">Cross‑Domain Correlation</h3>
-            <div className="w-full h-40 md:h-full">
-              <CrossDomainCorrelationChart />
+        {/* Bottom section: Analytics and Alert Detail */}
+        <div className="col-span-12 row-span-5 grid grid-cols-12 gap-2">
+          {/* Analytics panels occupy 8 columns */}
+          <div className="col-span-8 grid grid-cols-3 gap-2">
+            <div className="bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg p-3 flex flex-col">
+              <h3 className="text-sm font-semibold text-white mb-2">Cross‑Domain Correlation</h3>
+              <div className="flex-1">
+                <CrossDomainCorrelationChart />
+              </div>
+            </div>
+            <div className="bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg p-3 flex flex-col">
+              <h3 className="text-sm font-semibold text-white mb-2">Resource Allocation</h3>
+              <div className="flex-1">
+                <ResourceAllocationChart metrics={metrics} />
+              </div>
+            </div>
+            <div className="bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg p-3 flex flex-col">
+              <h3 className="text-sm font-semibold text-white mb-2">Citizen Satisfaction</h3>
+              <div className="flex-1">
+                <CitizenSatisfactionGauge metrics={metrics} />
+              </div>
             </div>
           </div>
-          <div className="flex-1 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg p-3">
-            <h3 className="text-sm font-semibold text-white mb-2">Resource Allocation</h3>
-            <div className="w-full h-40 md:h-full">
-              <ResourceAllocationChart metrics={metrics} />
-            </div>
-          </div>
-          <div className="flex-1 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg p-3">
-            <h3 className="text-sm font-semibold text-white mb-2">Citizen Satisfaction</h3>
-            <div className="w-full h-40 md:h-full">
-              <CitizenSatisfactionGauge metrics={metrics} />
-            </div>
+          {/* Alert detail panel occupies 4 columns */}
+          <div className="col-span-4">
+            <AlertDetailInline alert={selectedAlert} onClose={() => setSelectedAlert(null)} />
           </div>
         </div>
         {/* Bottom status bar */}
@@ -308,11 +318,11 @@ export function OptimizedExecutiveDashboard({
             </div>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-              <span className="text-slate-300">Infrastructure: <span className="text-green-400">{metrics ? (metrics.infrastructureHealth * 100).toFixed(0) : '92'}%</span></span>
+              <span className="text-slate-300">Infrastructure: <span className="text-green-400">{metrics ? (metrics.infrastructureHealth * 100).toFixed(0) : '93'}%</span></span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-              <span className="text-slate-300">Traffic: <span className="text-yellow-400">{metrics ? (metrics.trafficFlow * 100).toFixed(0) : '34'}%</span></span>
+              <span className="text-slate-300">Traffic: <span className="text-yellow-400">{metrics ? (metrics.trafficFlow * 100).toFixed(0) : '36'}%</span></span>
             </div>
           </div>
           <div className="text-xs text-slate-400 whitespace-nowrap">
@@ -351,10 +361,6 @@ export function OptimizedExecutiveDashboard({
           </motion.div>
         )}
       </AnimatePresence>
-      {/* Alert modal */}
-      {selectedAlert && (
-        <AlertDetailModal alert={selectedAlert} onClose={() => setSelectedAlert(null)} />
-      )}
     </div>
   );
 }
