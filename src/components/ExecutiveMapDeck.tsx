@@ -118,12 +118,16 @@ export function ExecutiveMapDeck({ className = '' }: ExecutiveMapDeckProps) {
       maxZoom: 19,
       tileSize: 256,
       // Use a function to render bitmap tiles from the OSM tile URL
-      renderSubLayers: props => {
-        const bbox: any = props.tile.bbox;
+      renderSubLayers: subProps => {
+        const bbox: any = subProps.tile.bbox;
         const { west, south, east, north } = bbox;
-        return new BitmapLayer(props, {
-          id: `${props.id}-bitmap`,
-          image: props.data as any,
+        // When creating a BitmapLayer within a TileLayer, we avoid spreading
+        // subProps into the BitmapLayer, as the default `data` on subProps
+        // contains the image URL string which is not an iterable container.
+        // Instead we supply only the properties required to render the tile.
+        return new BitmapLayer({
+          id: `${subProps.id}-bitmap`,
+          image: subProps.data as any,
           bounds: [west, south, east, north]
         });
       }
