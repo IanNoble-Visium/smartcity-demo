@@ -1,4 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import * as joint from 'jointjs';
+import 'jointjs/dist/joint.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LineChart,
@@ -48,29 +50,16 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
   // Right-side panel tab (space-efficient, no extra dialogs)
   const [rightTab, setRightTab] = useState<'predictions' | 'anomalies'>('predictions');
 
-  // Active top-level analytics tab (carbon, maintenance, green)
-  const [activeTab, setActiveTab] = useState<'carbon' | 'maintenance' | 'green'>('carbon');
+  // JointJS diagram reference and active panel state
+  const diagramRef = useRef<HTMLDivElement>(null);
+  const [activePanel, setActivePanel] = useState<null | 'carbon' | 'maintenance' | 'green'>(null);
 
-  // Dynamic chart height to guarantee single-viewport fit
-  const contentRef = useRef<HTMLDivElement>(null);
-  const [chartH, setChartH] = useState(150);
-  useEffect(() => {
-    const calc = () => {
-      const el = contentRef.current;
-      if (!el) return;
-      const h = el.clientHeight; // available vertical space inside tab content
-      // Approx chrome per card (header + paddings): ~36px, 2 rows, 1 gap (~4px)
-      const rows = 2;
-      const perCardChrome = 36;
-      const totalGaps = 4; // Tailwind gap-1 => 4px between rows
-      const availablePerCard = Math.max(0, Math.floor((h - totalGaps) / rows) - perCardChrome);
-      const next = Math.max(120, Math.min(180, availablePerCard));
-      setChartH(next);
-    };
-    calc();
-    window.addEventListener('resize', calc);
-    return () => window.removeEventListener('resize', calc);
-  }, [activeTab, compactMode]);
+  // Fixed chart height for content panels. Previously chartH was computed
+  // dynamically based on available space; to simplify layout within the
+  // slide‑out panel we assign a constant height that fits well within the
+  // single‑viewport dashboard.
+  const chartH = 150;
+
 
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({
@@ -78,6 +67,119 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
       [section]: !prev[section]
     }));
   };
+
+  // Initialize JointJS diagram once the component mounts. The diagram renders
+  // interactive nodes representing each major analytics module. When a node
+  // is clicked, a slide‑out panel opens with the corresponding content.
+  useEffect(() => {
+    const el = diagramRef.current;
+    if (!el) return;
+    // Clean up previous diagram if re-rendered
+    while (el.firstChild) el.removeChild(el.firstChild);
+    const graph = new joint.dia.Graph();
+    const paper = new joint.dia.Paper({
+      el: el,
+      model: graph,
+      width: el.clientWidth || 800,
+      height: el.clientHeight || 400,
+      gridSize: 10,
+      drawGrid: false,
+      interactive: { linkMove: false }
+    });
+
+    // Map to associate element IDs with panel types.  When the user
+    // clicks on a node we use this mapping to decide which panel to open.
+    const nodeTypeMap: Record<string, 'carbon' | 'maintenance' | 'green'> = {};
+
+    // Helper to create rectangular nodes with consistent styling.  The
+    // JointJS type definitions do not allow arbitrary attributes on the
+    // shape definition so we instead record the mapping in `nodeTypeMap`.
+    const createNode = (label: string, type: 'carbon' | 'maintenance' | 'green', x: number, y: number) => {
+      const rect = new joint.shapes.standard.Rectangle();
+      rect.position(x, y);
+      rect.resize(160, 80);
+      rect.attr({
+        body: {
+          fill: '#111827',
+          stroke: '#3b82f6',
+          strokeWidth: 2,
+          rx: 8,
+          ry: 8
+        },
+        label: {
+          text: label,
+          fill: '#e5e7eb',
+          fontSize: 12,
+          fontWeight: 600
+        }
+      });
+      rect.addTo(graph);
+      // Record the type for later lookup when the node is clicked
+      nodeTypeMap[rect.id] = type;
+      return rect;
+    };
+
+    // Central hub node
+    const central = new joint.shapes.standard.Circle();
+    central.position(340, 40);
+    central.resize(80, 80);
+    central.attr({
+      body: {
+        fill: '#10b981',
+        stroke: '#065f46',
+        strokeWidth: 2
+      },
+      label: {
+        text: 'Analytics',
+        fill: '#f0fdfa',
+        fontSize: 12,
+        fontWeight: 600
+      }
+    });
+    central.addTo(graph);
+
+    // Module nodes
+    const carbonNode = createNode('Carbon Emissions', 'carbon', 80, 180);
+    const maintenanceNode = createNode('Maintenance', 'maintenance', 320, 180);
+    const greenNode = createNode('Green Energy', 'green', 560, 180);
+
+    // Connect central hub to each module
+    [carbonNode, maintenanceNode, greenNode].forEach((node) => {
+      const link = new joint.shapes.standard.Link();
+      link.source({ id: central.id });
+      link.target({ id: node.id });
+      link.attr({
+        line: {
+          stroke: '#6b7280',
+          strokeWidth: 1,
+          targetMarker: {
+            type: 'path',
+            d: 'M 4 0 L 0 2 L 4 4 z'
+          }
+        }
+      });
+      link.addTo(graph);
+    });
+
+    // Register a click handler at the paper level.  When an element is
+    // clicked, look up its ID in the `nodeTypeMap` and open the
+    // corresponding panel.  This avoids calling `.on` on individual
+    // elements which the TypeScript definitions disallow.
+    paper.on('element:pointerclick', (cellView: any) => {
+      const modelId = cellView.model.id as string;
+      const t = nodeTypeMap[modelId];
+      if (t) {
+        setActivePanel(t);
+      }
+    });
+
+    return () => {
+      // Remove paper event listeners to avoid duplicates on re-render.  Use
+      // type assertion because `off` is not defined in the Paper type
+      // definitions, but it exists at runtime via Backbone.js.
+      (paper as any).off('element:pointerclick');
+    };
+  }, [diagramRef]);
 
   // Generate analytics metrics from current data
   const analyticsMetrics = useMemo((): AnalyticsMetric[] => {
@@ -1150,42 +1252,28 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
         </div>
       </div>
 
-      {/* Top-level tab navigation */}
-      <div className="relative z-10 flex items-center gap-2 mb-1 px-3">
-        <button
-          className={`btn btn-ghost btn-xs ${activeTab === 'carbon' ? 'bg-primary/20 text-primary' : ''}`}
-          onClick={() => setActiveTab('carbon')}
-        >
-          Carbon Emissions
-        </button>
-        <button
-          className={`btn btn-ghost btn-xs ${activeTab === 'maintenance' ? 'bg-primary/20 text-primary' : ''}`}
-          onClick={() => setActiveTab('maintenance')}
-        >
-          Maintenance
-        </button>
-        <button
-          className={`btn btn-ghost btn-xs ${activeTab === 'green' ? 'bg-primary/20 text-primary' : ''}`}
-          onClick={() => setActiveTab('green')}
-        >
-          Green Energy
-        </button>
-      </div>
-
-      {/* Tab content area */}
-      <div ref={contentRef} className="relative z-10 flex-1 min-h-0 px-1 pb-1 overflow-hidden">
-        {activeTab === 'carbon' && <CarbonTabContent />}
-        {activeTab === 'maintenance' && <MaintenanceTabContent />}
-        {activeTab === 'green' && <GreenTabContent />}
-        {/* Legacy components (guarded to avoid mounting and Recharts zero-size warnings) */}
-        {false && (
-          <>
-            <CompactKPICards />
-            <CompactMainChart />
-            <CompactAnalyticsGrid />
-            <CompactAIPanel />
-          </>
+      {/* Diagram area with interactive nodes and slide‑out panel */}
+      <div className="relative z-10 flex-1 flex overflow-hidden px-1 pb-1">
+        {/* Diagram container */}
+        <div ref={diagramRef} className="flex-1 relative"></div>
+        {/* Side panel that appears when a node is selected */}
+        {activePanel && (
+          <div className="w-1/3 min-w-[280px] max-w-[420px] bg-card border-l border-border p-2 overflow-y-auto">
+            <div className="flex justify-end mb-1">
+              <button className="btn btn-ghost btn-xs" onClick={() => setActivePanel(null)}>Close</button>
+            </div>
+            {activePanel === 'carbon' && <CarbonTabContent />}
+            {activePanel === 'maintenance' && <MaintenanceTabContent />}
+            {activePanel === 'green' && <GreenTabContent />}
+          </div>
         )}
+        {/* Hidden legacy components to preserve references for TypeScript */}
+        <div className="hidden">
+          <CompactKPICards />
+          <CompactMainChart />
+          <CompactAnalyticsGrid />
+          <CompactAIPanel />
+        </div>
       </div>
     </div>
   );
