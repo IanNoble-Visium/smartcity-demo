@@ -304,14 +304,6 @@ export function ExecutiveMapDeck({ className = '', alerts, onAlertSelect, focuse
     return R * c;
   }
 
-  const alertCounts = useMemo(() => {
-    const counts = { critical: 0, high: 0, medium: 0, low: 0, info: 0 } as Record<string, number>;
-    (alerts || []).forEach(a => {
-      counts[a.severity] = (counts[a.severity] || 0) + 1;
-    });
-    return counts;
-  }, [alerts]);
-
   const layerStats = useMemo(() => {
     switch (currentLayer) {
       case 'geojson': {

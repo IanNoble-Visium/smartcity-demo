@@ -1,7 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Area,
   Line,
   XAxis,
   YAxis,
@@ -12,7 +11,6 @@ import {
   ComposedChart
 } from 'recharts';
 // import { useDataStore } from '../store';
-import { ContextualVideoBackground } from './VideoBackground';
 import { ChartErrorBoundary } from './ErrorBoundary';
 
 interface AnomalyDetectionEngineProps {
@@ -46,7 +44,7 @@ interface MLModel {
   anomaliesDetected: number;
 }
 
-export function AnomalyDetectionEngine({ className = '' }: AnomalyDetectionEngineProps) {
+export const AnomalyDetectionEngine = memo(function AnomalyDetectionEngine({ className = '' }: AnomalyDetectionEngineProps) {
   // Avoid subscribing to global metrics to prevent periodic re-renders
   const [selectedModel, setSelectedModel] = useState<string>(() => localStorage.getItem('ml.selectedModel') || 'ensemble');
   const [timeWindow, setTimeWindow] = useState<'1h' | '4h' | '24h' | '7d'>(() => (localStorage.getItem('ml.timeWindow') as any) || '24h');
@@ -233,12 +231,23 @@ export function AnomalyDetectionEngine({ className = '' }: AnomalyDetectionEngin
       <div className="card-header flex-shrink-0 p-2">
         <h3 className="card-title text-xs">ML Model Performance</h3>
         <div className="flex items-center gap-1">
+          {/* Category tabs */}
+          <div className="flex items-center gap-1 mr-2">
+            {(['all','predictive','statistical','network'] as const).map(cat => (
+              <button
+                key={cat}
+                className={`btn text-[10px] px-1 py-0.5 ${modelCategory===cat ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => { setModelCategory(cat); persist('ml.modelCategory', cat); }}
+                title={`${cat[0].toUpperCase()+cat.slice(1)} models`}
+              >{cat}</button>
+            ))}
+          </div>
           <select
             value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value)}
+            onChange={(e) => { setSelectedModel(e.target.value); persist('ml.selectedModel', e.target.value); }}
             className="btn btn-ghost text-xs px-1 py-0.5"
           >
-            {mlModels.map(model => (
+            {(categorizedModels[modelCategory] || mlModels).map(model => (
               <option key={model.id} value={model.id}>{model.name}</option>
             ))}
           </select>
@@ -247,7 +256,7 @@ export function AnomalyDetectionEngine({ className = '' }: AnomalyDetectionEngin
 
       <div className="card-content flex-1 min-h-0 p-1 overflow-y-auto">
         <div className="grid grid-cols-1 gap-1">
-          {mlModels.map((model) => (
+          {(categorizedModels[modelCategory] || mlModels).map((model) => (
             <div
               key={model.id}
               className={`p-1.5 rounded cursor-pointer transition-all text-xs ${
@@ -284,9 +293,19 @@ export function AnomalyDetectionEngine({ className = '' }: AnomalyDetectionEngin
       <div className="card-header flex-shrink-0 p-2">
         <h3 className="card-title text-xs">Real-time Anomaly Detection</h3>
         <div className="flex items-center gap-1">
+          {/* Quick severity chips */}
+          <div className="hidden md:flex items-center gap-1 mr-2">
+            {['all','critical','high','medium','low'].map(s => (
+              <button
+                key={s}
+                className={`px-1 py-0.5 text-[10px] rounded ${severityFilter===s ? 'bg-cyan-600 text-white' : 'bg-slate-800/70 text-cyan-200 hover:bg-slate-700/70'}`}
+                onClick={() => { setSeverityFilter(s); persist('ml.severity', s); }}
+              >{s}</button>
+            ))}
+          </div>
           <select
             value={timeWindow}
-            onChange={(e) => setTimeWindow(e.target.value as typeof timeWindow)}
+            onChange={(e) => { const v = e.target.value as typeof timeWindow; setTimeWindow(v); persist('ml.timeWindow', v); }}
             className="btn btn-ghost text-xs px-1 py-0.5"
           >
             <option value="1h">Last Hour</option>
@@ -397,6 +416,7 @@ export function AnomalyDetectionEngine({ className = '' }: AnomalyDetectionEngin
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3 }}
+                onClick={() => setSelectedAnomaly(anomaly)}
             >
               <div className="flex items-start justify-between mb-1">
                 <div className="flex-1 min-w-0">
@@ -458,7 +478,7 @@ export function AnomalyDetectionEngine({ className = '' }: AnomalyDetectionEngin
                   {anomaly.status.replace('_', ' ')}
                 </span>
                 <div className="flex gap-0.5">
-                  <button className="btn btn-ghost text-xs px-1 py-0.5">Investigate</button>
+                  <button className="btn btn-ghost text-xs px-1 py-0.5" onClick={() => setSelectedAnomaly(anomaly)}>Investigate</button>
                   <button className="btn btn-ghost text-xs px-1 py-0.5">Resolve</button>
                 </div>
               </div>
@@ -504,6 +524,74 @@ export function AnomalyDetectionEngine({ className = '' }: AnomalyDetectionEngin
           </div>
         </div>
       </div>
+
+      {/* Right-side drawer for anomaly details */}
+      {selectedAnomaly && (
+        <div className="fixed top-0 right-0 h-full w-[28rem] max-w-[90vw] bg-slate-900/95 backdrop-blur-md border-l border-slate-700 z-50 shadow-2xl">
+          <div className="p-3 flex items-center justify-between border-b border-slate-700">
+            <h3 className="text-sm font-semibold text-white">Anomaly Details</h3>
+            <button className="btn btn-ghost text-xs px-2 py-0.5" onClick={() => setSelectedAnomaly(null)}>✕</button>
+          </div>
+          <div className="p-3 space-y-2 text-sm overflow-y-auto h-[calc(100%-44px)]">
+            <div className="flex items-center justify-between">
+              <div className="text-slate-300">Metric</div>
+              <div className="font-medium text-white">{selectedAnomaly.metric}</div>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="text-slate-300">Severity</div>
+              <span className={`status-indicator text-xs px-2 py-0.5 ${
+                selectedAnomaly.severity === 'critical' ? 'status-error' :
+                selectedAnomaly.severity === 'high' ? 'status-warning' :
+                selectedAnomaly.severity === 'medium' ? 'status-info' : 'status-success'
+              }`}>{selectedAnomaly.severity}</span>
+            </div>
+            <div>
+              <div className="text-slate-300 mb-1">Description</div>
+              <div className="text-slate-100 text-sm">{selectedAnomaly.description}</div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-slate-800/60 p-2 rounded">
+                <div className="text-[11px] text-slate-300">Detected</div>
+                <div className="text-white font-semibold">{selectedAnomaly.value.toFixed(1)}</div>
+              </div>
+              <div className="bg-slate-800/60 p-2 rounded">
+                <div className="text-[11px] text-slate-300">Expected</div>
+                <div className="text-white font-semibold">{selectedAnomaly.expectedValue.toFixed(1)}</div>
+              </div>
+              <div className="bg-slate-800/60 p-2 rounded">
+                <div className="text-[11px] text-slate-300">Deviation</div>
+                <div className="text-warning font-semibold">{selectedAnomaly.deviation}%</div>
+              </div>
+              <div className="bg-slate-800/60 p-2 rounded">
+                <div className="text-[11px] text-slate-300">Confidence</div>
+                <div className="text-success font-semibold">{selectedAnomaly.confidence}%</div>
+              </div>
+            </div>
+            {selectedAnomaly.mitreAttack && (
+              <div>
+                <div className="text-slate-300 mb-1">MITRE</div>
+                <div className="flex gap-1 flex-wrap">
+                  {selectedAnomaly.mitreAttack.map(t => (
+                    <span key={t} className="px-2 py-0.5 rounded bg-primary/20 text-primary text-xs">{t}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div>
+              <div className="text-slate-300 mb-1">Recommendations</div>
+              <ul className="list-disc list-inside text-slate-100 text-sm space-y-1">
+                {selectedAnomaly.recommendations.map((r, i) => (
+                  <li key={i}>{r}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="pt-2 flex gap-2">
+              <button className="btn btn-primary text-xs px-2">Open Playbook</button>
+              <button className="btn btn-ghost text-xs px-2" onClick={() => setSelectedAnomaly(null)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+});
