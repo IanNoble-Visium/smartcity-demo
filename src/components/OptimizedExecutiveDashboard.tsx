@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Enhanced3DCityMap } from './Enhanced3DCityMap';
+// Replace the old 3D map with a deck.gl driven map
+import { ExecutiveMapDeck } from './ExecutiveMapDeck';
+import { CrossDomainCorrelationChart } from './CrossDomainCorrelationChart';
+import { ResourceAllocationChart } from './ResourceAllocationChart';
+import { CitizenSatisfactionGauge } from './CitizenSatisfactionGauge';
+import { AlertDetailModal } from './AlertDetailModal';
 import { IncidentDetail } from './IncidentDetail';
 import type { Metrics, Alert, Incident } from '../types';
 
@@ -55,9 +60,14 @@ function CompactKpiGrid({ metrics }: { metrics: Metrics | null }) {
   );
 }
 
+// CompactAlertsList was previously defined for an isolated alerts component.  The
+// alerts list is now rendered inline within the dashboard, so this helper
+// component is no longer used.  It is intentionally left commented out to
+// avoid unused variable warnings while preserving the original implementation
+// for reference.
+/*
 function CompactAlertsList({ alerts }: { alerts: Alert[] }) {
   const criticalAlerts = alerts.filter(a => a.severity === 'critical' || a.severity === 'high').slice(0, 3);
-  
   if (criticalAlerts.length === 0) {
     return (
       <div className="text-center text-slate-400 py-4">
@@ -66,7 +76,6 @@ function CompactAlertsList({ alerts }: { alerts: Alert[] }) {
       </div>
     );
   }
-
   return (
     <div className="space-y-2">
       {criticalAlerts.map(alert => (
@@ -82,6 +91,7 @@ function CompactAlertsList({ alerts }: { alerts: Alert[] }) {
     </div>
   );
 }
+*/
 
 export function OptimizedExecutiveDashboard({
   metrics,
@@ -90,12 +100,13 @@ export function OptimizedExecutiveDashboard({
   topology: _topology
 }: OptimizedExecutiveDashboardProps) {
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
+  // Track selected alert for displaying associated video details
+  const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
 
   return (
     <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Single Viewport Grid Layout */}
+      {/* 12×12 grid layout to ensure a single viewport without scrolling */}
       <div className="h-full grid grid-cols-12 grid-rows-12 gap-2 p-2">
-        
         {/* Header Status Bar */}
         <div className="col-span-12 row-span-1 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg flex items-center justify-between px-4">
           <div className="flex items-center gap-4">
@@ -103,7 +114,7 @@ export function OptimizedExecutiveDashboard({
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
               <span className="text-green-300 text-sm font-medium">LIVE</span>
-              <span className="text-slate-400 text-sm">Updated 2s ago</span>
+              <span className="text-slate-400 text-sm">Updated just now</span>
             </div>
           </div>
           <div className="flex items-center gap-4 text-sm">
@@ -111,71 +122,90 @@ export function OptimizedExecutiveDashboard({
             <span className="text-slate-300">Active Incidents: <span className="text-yellow-400 font-medium">{incidents.length}</span></span>
           </div>
         </div>
-
-        {/* KPI Cards - Horizontal Layout */}
+        {/* KPI Cards */}
         <div className="col-span-12 row-span-2 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg p-3">
           <CompactKpiGrid metrics={metrics} />
         </div>
-
-        {/* Main 3D Map - Primary Focus */}
-        <div className="col-span-8 row-span-8 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden">
+        {/* Map area */}
+        <div className="col-span-8 row-span-6 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden">
           <div className="h-full relative">
+            {/* Map labels */}
             <div className="absolute top-2 left-2 z-10 bg-slate-900/80 backdrop-blur-md rounded px-2 py-1">
               <span className="text-cyan-300 text-sm font-medium">Live City Map</span>
               <span className="text-slate-400 text-xs ml-2">Baltimore Metropolitan Area</span>
             </div>
             <div className="absolute top-2 right-2 z-10 bg-slate-900/80 backdrop-blur-md rounded px-2 py-1">
               <span className="text-green-300 text-sm">ONLINE</span>
-              <span className="text-slate-400 text-xs ml-2">Zoom: 1.0</span>
             </div>
-            <Enhanced3DCityMap incidents={incidents} />
+            <ExecutiveMapDeck />
           </div>
         </div>
-
-        {/* Right Sidebar - Alerts and Details */}
-        <div className="col-span-4 row-span-8 space-y-2">
-          
+        {/* Sidebar: Alerts and Incidents */}
+        <div className="col-span-4 row-span-6 flex flex-col space-y-2">
           {/* Critical Alerts */}
-          <div className="bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg h-1/2">
-            <div className="p-3 border-b border-slate-700/50">
-              <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                <span className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></span>
-                Critical Alerts
-              </h3>
+          <div className="flex-1 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden flex flex-col">
+            <div className="p-3 border-b border-slate-700/50 flex items-center gap-2">
+              <span className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></span>
+              <h3 className="text-sm font-semibold text-white">Critical Alerts</h3>
             </div>
-            <div className="p-3 h-full overflow-y-auto">
-              <CompactAlertsList alerts={alerts} />
+            <div className="p-3 flex-1 overflow-y-auto">
+              {(() => {
+                const criticalAlerts = alerts.filter(a => a.severity === 'critical' || a.severity === 'high').slice(0, 5);
+                if (criticalAlerts.length === 0) {
+                  return (
+                    <div className="text-center text-slate-400 py-6">
+                      <div className="text-2xl mb-1">✓</div>
+                      <div className="text-xs">No critical alerts</div>
+                    </div>
+                  );
+                }
+                return (
+                  <div className="space-y-2">
+                    {criticalAlerts.map(alert => (
+                      <div
+                        key={alert.id}
+                        className="bg-slate-800/50 rounded p-2 cursor-pointer hover:bg-slate-700/50 transition-colors border-l-2 border-red-400"
+                        onClick={() => setSelectedAlert(alert)}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs text-red-400 font-medium">{alert.severity.toUpperCase()}</span>
+                          <span className="text-xs text-slate-400">{new Date(alert.timestamp).toLocaleTimeString()}</span>
+                        </div>
+                        <div className="text-sm text-white font-medium">{alert.title}</div>
+                        <div className="text-xs text-slate-300 mt-1 line-clamp-2">{alert.description}</div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
           </div>
-
-          {/* Incident Details */}
-          <div className="bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg h-1/2">
-            <div className="p-3 border-b border-slate-700/50">
-              <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                <span className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></span>
-                Recent Incidents
-              </h3>
+          {/* Recent Incidents */}
+          <div className="flex-1 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden flex flex-col">
+            <div className="p-3 border-b border-slate-700/50 flex items-center gap-2">
+              <span className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></span>
+              <h3 className="text-sm font-semibold text-white">Recent Incidents</h3>
             </div>
-            <div className="p-3 h-full overflow-y-auto">
+            <div className="p-3 flex-1 overflow-y-auto">
               {incidents.length > 0 ? (
                 <div className="space-y-2">
                   {incidents.slice(0, 4).map(incident => (
-                    <div 
-                      key={incident.id} 
+                    <div
+                      key={incident.id}
                       className="bg-slate-800/50 rounded p-2 cursor-pointer hover:bg-slate-700/50 transition-colors"
                       onClick={() => setSelectedIncident(incident)}
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className={`text-xs font-medium ${
-                          incident.severity === 'critical' ? 'text-red-400' :
-                          incident.severity === 'high' ? 'text-orange-400' :
-                          incident.severity === 'medium' ? 'text-yellow-400' : 'text-blue-400'
-                        }`}>
-                          {incident.severity.toUpperCase()}
-                        </span>
-                        <span className="text-xs text-slate-400">
-                          {new Date(incident.startTime).toLocaleTimeString()}
-                        </span>
+                          incident.severity === 'critical'
+                            ? 'text-red-400'
+                            : incident.severity === 'high'
+                            ? 'text-orange-400'
+                            : incident.severity === 'medium'
+                            ? 'text-yellow-400'
+                            : 'text-blue-400'
+                        }`}>{incident.severity.toUpperCase()}</span>
+                        <span className="text-xs text-slate-400">{new Date(incident.startTime).toLocaleTimeString()}</span>
                       </div>
                       <div className="text-sm text-white font-medium">{incident.summary}</div>
                       <div className="text-xs text-slate-300 mt-1 line-clamp-2">{incident.description}</div>
@@ -183,38 +213,57 @@ export function OptimizedExecutiveDashboard({
                   ))}
                 </div>
               ) : (
-                <div className="text-center text-slate-400 py-8">
-                  <div className="text-2xl mb-2">✓</div>
-                  <div className="text-sm">No active incidents</div>
+                <div className="text-center text-slate-400 py-6">
+                  <div className="text-2xl mb-1">✓</div>
+                  <div className="text-xs">No active incidents</div>
                 </div>
               )}
             </div>
           </div>
         </div>
-
-        {/* Bottom Status Bar */}
-        <div className="col-span-12 row-span-1 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg flex items-center justify-between px-4">
-          <div className="flex items-center gap-6 text-sm">
+        {/* Analytics section */}
+        <div className="col-span-12 row-span-4 flex gap-2">
+          <div className="flex-1 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg p-3">
+            <h3 className="text-sm font-semibold text-white mb-2">Cross‑Domain Correlation</h3>
+            <div className="w-full h-40 md:h-full">
+              <CrossDomainCorrelationChart />
+            </div>
+          </div>
+          <div className="flex-1 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg p-3">
+            <h3 className="text-sm font-semibold text-white mb-2">Resource Allocation</h3>
+            <div className="w-full h-40 md:h-full">
+              <ResourceAllocationChart metrics={metrics} />
+            </div>
+          </div>
+          <div className="flex-1 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg p-3">
+            <h3 className="text-sm font-semibold text-white mb-2">Citizen Satisfaction</h3>
+            <div className="w-full h-40 md:h-full">
+              <CitizenSatisfactionGauge metrics={metrics} />
+            </div>
+          </div>
+        </div>
+        {/* Bottom status bar */}
+        <div className="col-span-12 row-span-1 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg flex items-center justify-between px-4 text-sm">
+          <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
               <span className="text-slate-300">Network: <span className="text-blue-400">Optimal</span></span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-              <span className="text-slate-300">Infrastructure: <span className="text-green-400">92%</span></span>
+              <span className="text-slate-300">Infrastructure: <span className="text-green-400">{metrics ? (metrics.infrastructureHealth * 100).toFixed(0) : '92'}%</span></span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-              <span className="text-slate-300">Traffic: <span className="text-yellow-400">Moderate</span></span>
+              <span className="text-slate-300">Traffic: <span className="text-yellow-400">{metrics ? (metrics.trafficFlow * 100).toFixed(0) : '34'}%</span></span>
             </div>
           </div>
-          <div className="text-xs text-slate-400">
+          <div className="text-xs text-slate-400 whitespace-nowrap">
             TruContext Smart City Operations • Baltimore, MD • {new Date().toLocaleString()}
           </div>
         </div>
       </div>
-
-      {/* Incident Detail Modal */}
+      {/* Incident modal */}
       <AnimatePresence>
         {selectedIncident && (
           <motion.div
@@ -229,11 +278,11 @@ export function OptimizedExecutiveDashboard({
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
+              onClick={e => e.stopPropagation()}
             >
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold text-white">Incident Details</h2>
-                <button 
+                <button
                   onClick={() => setSelectedIncident(null)}
                   className="text-slate-400 hover:text-white transition-colors"
                 >
@@ -245,6 +294,10 @@ export function OptimizedExecutiveDashboard({
           </motion.div>
         )}
       </AnimatePresence>
+      {/* Alert modal */}
+      {selectedAlert && (
+        <AlertDetailModal alert={selectedAlert} onClose={() => setSelectedAlert(null)} />
+      )}
     </div>
   );
 }
