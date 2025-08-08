@@ -23,8 +23,13 @@ import {
   type Trip
 } from '../mock/deckData';
 
+import type { Alert } from '../types';
+
 interface ExecutiveMapDeckProps {
   className?: string;
+  alerts?: Alert[];
+  onAlertSelect?: (alert: Alert) => void;
+  focusedAlert?: Alert | null;
 }
 
 type LayerType =
@@ -55,7 +60,7 @@ const LAYER_LABELS: Record<LayerType, string> = {
   trips: 'Trips'
 };
 
-export function ExecutiveMapDeck({ className = '' }: ExecutiveMapDeckProps) {
+export function ExecutiveMapDeck({ className = '', alerts, onAlertSelect, focusedAlert }: ExecutiveMapDeckProps) {
   // Initial view centered on Baltimore
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   // Compute a sensible map center using the Baltimore bounding box from the mock
@@ -104,6 +109,21 @@ export function ExecutiveMapDeck({ className = '' }: ExecutiveMapDeckProps) {
     }, 300);
     return () => clearInterval(interval);
   }, []);
+
+  // When a focused alert is provided, smoothly fly to its location with a higher zoom level.  This effect
+  // runs whenever `focusedAlert` changes.  The transitionDuration property enables a smooth animation.
+  useEffect(() => {
+    if (focusedAlert && focusedAlert.location) {
+      const { latitude, longitude } = focusedAlert.location;
+      setViewState((vs: any) => ({
+        ...vs,
+        latitude,
+        longitude,
+        zoom: Math.max(vs.zoom, 13),
+        transitionDuration: 800
+      }));
+    }
+  }, [focusedAlert]);
   // Build deck.gl layers based on selected visualization
   const layers = useMemo(() => {
     const baseLayers: any[] = [];
@@ -147,6 +167,35 @@ export function ExecutiveMapDeck({ className = '' }: ExecutiveMapDeckProps) {
         pickable: false
       })
     );
+
+    // Alert markers layer: display locations of alerts on the map.  We use a ScatterplotLayer
+    // for simplicity; each alert is drawn as a small colored circle.  Clicking a marker
+    // triggers the onAlertSelect callback with the alert object.
+    if (alerts && alerts.length) {
+      // Map severities to RGBA colours
+      const severityColors: Record<string, [number, number, number, number]> = {
+        critical: [220, 38, 38, 200], // red
+        high: [252, 165, 3, 200],     // orange
+        medium: [234, 179, 8, 200],   // yellow
+        low: [59, 130, 246, 200],     // blue
+        info: [16, 185, 129, 200]     // green
+      };
+      baseLayers.push(
+        new ScatterplotLayer({
+          id: 'alert-markers',
+          data: alerts.filter(a => a.location),
+          getPosition: (a: Alert) => [a.location!.longitude, a.location!.latitude],
+          getFillColor: (a: Alert) => severityColors[a.severity] || severityColors['medium'],
+          getRadius: () => 8,
+          radiusUnits: 'pixels',
+          pickable: true,
+          onClick: info => {
+            const alert = info.object as Alert;
+            if (alert && onAlertSelect) onAlertSelect(alert);
+          }
+        })
+      );
+    }
     switch (currentLayer) {
       case 'geojson':
         baseLayers.push(

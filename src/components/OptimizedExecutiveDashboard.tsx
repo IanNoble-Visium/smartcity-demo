@@ -102,6 +102,39 @@ export function OptimizedExecutiveDashboard({
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   // Track selected alert for displaying associated video details
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
+  // Focused alert for map fly-to; separate from selectedAlert so we can keep
+  // map state in sync even if the details dialog is closed.
+  const [focusedAlert, setFocusedAlert] = useState<Alert | null>(null);
+  // Collapse state for KPI grid; when collapsed, show a compact bar to free vertical space
+  const [kpiCollapsed, setKpiCollapsed] = useState(false);
+
+  // Render a compact horizontal KPI bar when the grid is collapsed.  This bar
+  // displays each metric in a condensed format with minimal spacing to
+  // maximize available screen real estate.  Icons could be substituted in
+  // place of labels for further compactness.
+  const KpiBar = ({ metrics }: { metrics: Metrics | null }) => {
+    if (!metrics) return null;
+    const items = [
+      { label: 'Energy', value: `${metrics.energyConsumption.toFixed(1)} MW` },
+      { label: 'Traffic', value: `${(metrics.trafficFlow * 100).toFixed(0)}%` },
+      { label: 'Air', value: `${metrics.airQuality.toFixed(0)} AQI` },
+      { label: 'Infra', value: `${(metrics.infrastructureHealth * 100).toFixed(0)}%` },
+      { label: 'Net', value: `${metrics.networkLatency.toFixed(0)} ms` },
+      { label: 'Sec', value: `${(metrics.securityScore * 100).toFixed(0)}%` },
+      { label: 'Sat', value: `${(metrics.citizenSatisfaction * 100).toFixed(0)}%` },
+      { label: 'Budget', value: `${(metrics.budgetUtilization * 100).toFixed(0)}%` }
+    ];
+    return (
+      <div className="flex flex-wrap items-center gap-3 text-xs text-cyan-200">
+        {items.map(item => (
+          <div key={item.label} className="flex items-center gap-1">
+            <span className="font-medium text-slate-200">{item.label}:</span>
+            <span className="text-slate-400 whitespace-nowrap">{item.value}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -122,12 +155,25 @@ export function OptimizedExecutiveDashboard({
             <span className="text-slate-300">Active Incidents: <span className="text-yellow-400 font-medium">{incidents.length}</span></span>
           </div>
         </div>
-        {/* KPI Cards */}
-        <div className="col-span-12 row-span-2 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg p-3">
-          <CompactKpiGrid metrics={metrics} />
+        {/* KPI Cards with collapsible option */}
+        <div className={`col-span-12 ${kpiCollapsed ? 'row-span-1' : 'row-span-2'} bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg p-3 relative`}
+        >
+          {/* Collapse/expand toggle */}
+          <button
+            onClick={() => setKpiCollapsed(prev => !prev)}
+            className="absolute top-2 right-2 text-slate-400 hover:text-cyan-300 text-sm focus:outline-none"
+            title={kpiCollapsed ? 'Expand metrics' : 'Collapse metrics'}
+          >
+            {kpiCollapsed ? '▾' : '▴'}
+          </button>
+          {kpiCollapsed ? (
+            <KpiBar metrics={metrics} />
+          ) : (
+            <CompactKpiGrid metrics={metrics} />
+          )}
         </div>
         {/* Map area */}
-        <div className="col-span-8 row-span-5 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden">
+        <div className={`col-span-8 ${kpiCollapsed ? 'row-span-6' : 'row-span-5'} bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden`}>
           <div className="h-full relative">
             {/* Map labels */}
             <div className="absolute top-2 left-2 z-10 bg-slate-900/80 backdrop-blur-md rounded px-2 py-1">
@@ -137,11 +183,18 @@ export function OptimizedExecutiveDashboard({
             <div className="absolute top-2 right-2 z-10 bg-slate-900/80 backdrop-blur-md rounded px-2 py-1">
               <span className="text-green-300 text-sm">ONLINE</span>
             </div>
-            <ExecutiveMapDeck />
+            <ExecutiveMapDeck
+              alerts={alerts}
+              focusedAlert={focusedAlert}
+              onAlertSelect={(alert: Alert) => {
+                setSelectedAlert(alert);
+                setFocusedAlert(alert);
+              }}
+            />
           </div>
         </div>
         {/* Sidebar: Alerts and Incidents */}
-        <div className="col-span-4 row-span-5 flex flex-col space-y-2">
+        <div className={`col-span-4 ${kpiCollapsed ? 'row-span-6' : 'row-span-5'} flex flex-col space-y-2`}>
           {/* Critical Alerts */}
           <div className="flex-1 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden flex flex-col">
             <div className="p-3 border-b border-slate-700/50 flex items-center gap-2">
@@ -165,7 +218,10 @@ export function OptimizedExecutiveDashboard({
                       <div
                         key={alert.id}
                         className="bg-slate-800/50 rounded p-2 cursor-pointer hover:bg-slate-700/50 transition-colors border-l-2 border-red-400"
-                        onClick={() => setSelectedAlert(alert)}
+                        onClick={() => {
+                          setSelectedAlert(alert);
+                          setFocusedAlert(alert);
+                        }}
                       >
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-xs text-red-400 font-medium">{alert.severity.toUpperCase()}</span>
