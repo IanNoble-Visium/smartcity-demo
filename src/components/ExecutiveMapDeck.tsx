@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { DeckGL } from '@deck.gl/react';
 import { GeoJsonLayer, ScatterplotLayer, LineLayer } from '@deck.gl/layers';
 import { HeatmapLayer, HexagonLayer } from '@deck.gl/aggregation-layers';
@@ -57,19 +57,52 @@ const LAYER_LABELS: Record<LayerType, string> = {
 export function ExecutiveMapDeck({ className = '' }: ExecutiveMapDeckProps) {
   // Initial view centered on Baltimore
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // Compute a sensible map center using the Baltimore bounding box from the mock
+  // data.  Centering the view on the middle of the bounding box ensures all
+  // randomly generated points fall within the viewport.  We avoid magic
+  // numbers so that updates to the bounding box will automatically adjust the
+  // view.  See src/mock/deckData.ts for the bounding box definition.
+  const centerLat = useMemo(() => {
+    // Average the north and south bounds
+    const coords = baltimorePolygon.geometry.coordinates[0];
+    const lats = coords.map(pt => pt[1]);
+    return (Math.min(...lats) + Math.max(...lats)) / 2;
+  }, []);
+  const centerLon = useMemo(() => {
+    const coords = baltimorePolygon.geometry.coordinates[0];
+    const lons = coords.map(pt => pt[0]);
+    return (Math.min(...lons) + Math.max(...lons)) / 2;
+  }, []);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [viewState, setViewState] = useState<MapViewState>({
-    latitude: 39.29,
-    longitude: -76.61,
-    zoom: 10.5,
+    latitude: centerLat,
+    longitude: centerLon,
+    zoom: 11,
     pitch: 45,
     bearing: 0
   });
   const [currentLayer, setCurrentLayer] = useState<LayerType>('geojson');
   // Generate mock data once
-  const heatmapData = useMemo<HeatmapPoint[]>(() => generateHeatmapData(250, 10), []);
-  const scatterData = useMemo<ScatterPoint[]>(() => generateScatterData(350, 11), []);
-  const flightPaths = useMemo<FlightPath[]>(() => generateFlightPaths(25, 12), []);
-  const tripsData = useMemo<Trip[]>(() => generateTrips(10, 40, 13), []);
+  // Generate smaller datasets to improve performance and avoid WebGL
+  // memory exhaustion.  Reducing the number of points does not materially
+  // affect the visual narrative at this scale, but it dramatically lowers
+  // the size of GPU buffers.
+  const heatmapData = useMemo<HeatmapPoint[]>(() => generateHeatmapData(150, 10), []);
+  const scatterData = useMemo<ScatterPoint[]>(() => generateScatterData(200, 11), []);
+  const flightPaths = useMemo<FlightPath[]>(() => generateFlightPaths(15, 12), []);
+  const tripsData = useMemo<Trip[]>(() => generateTrips(6, 30, 13), []);
+
+  // Manage animated time for the TripsLayer.  Updating currentTime via
+  // a timer avoids recalculating layers on every render and prevents the
+  // accumulation of large timestamp values that can overflow 32‑bit WebGL
+  // buffers (see INVALID_OPERATION errors in browser console).
+  const [currentTime, setCurrentTime] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(t => (t + 100) % 60000);
+    }, 300);
+    return () => clearInterval(interval);
+  }, []);
   // Build deck.gl layers based on selected visualization
   const layers = useMemo(() => {
     const baseLayers: any[] = [];
@@ -110,10 +143,14 @@ export function ExecutiveMapDeck({ className = '' }: ExecutiveMapDeckProps) {
             data: heatmapData,
             getPosition: (d: HeatmapPoint) => d.position,
             getWeight: (d: HeatmapPoint) => d.weight,
-            radiusPixels: 50,
+            radiusPixels: 40,
             intensity: 1,
-            threshold: 0.03,
-            aggregation: 'SUM'
+            threshold: 0.05,
+            aggregation: 'SUM',
+            // Compute aggregation on the CPU to avoid creating large textures that can
+            // exceed WebGL buffer limits.  See https://deck.gl/docs/api-reference/aggregation-layers/heatmap-layer#gpuaggregation
+            gpuAggregation: false,
+            pickable: false
           })
         );
         break;
@@ -123,12 +160,15 @@ export function ExecutiveMapDeck({ className = '' }: ExecutiveMapDeckProps) {
             id: 'hexagon-layer',
             data: heatmapData,
             getPosition: (d: HeatmapPoint) => d.position,
-            radius: 0.01,
-            elevationScale: 20,
+            // radius in meters; using ~700m yields a pleasing hex bin granularity
+            radius: 700,
+            elevationScale: 30,
             extruded: true,
             coverage: 0.8,
             lowerPercentile: 50,
-            opacity: 0.6
+            opacity: 0.6,
+            pickable: false,
+            gpuAggregation: false
           })
         );
         break;
@@ -170,9 +210,12 @@ export function ExecutiveMapDeck({ className = '' }: ExecutiveMapDeckProps) {
             opacity: 0.8,
             widthMinPixels: 4,
             jointRounded: true,
-            trailLength: 600,
-            currentTime: Date.now() % 1000,
-            shadowEnabled: false
+            // Increase trailLength relative to total trip duration to show longer tails
+            trailLength: 5000,
+            // Use controlled currentTime from state to animate trips smoothly
+            currentTime,
+            shadowEnabled: false,
+            pickable: false
           })
         );
         break;

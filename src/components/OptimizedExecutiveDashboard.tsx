@@ -127,7 +127,7 @@ export function OptimizedExecutiveDashboard({
           <CompactKpiGrid metrics={metrics} />
         </div>
         {/* Map area */}
-        <div className="col-span-8 row-span-6 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden">
+        <div className="col-span-8 row-span-5 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden">
           <div className="h-full relative">
             {/* Map labels */}
             <div className="absolute top-2 left-2 z-10 bg-slate-900/80 backdrop-blur-md rounded px-2 py-1">
@@ -141,7 +141,7 @@ export function OptimizedExecutiveDashboard({
           </div>
         </div>
         {/* Sidebar: Alerts and Incidents */}
-        <div className="col-span-4 row-span-6 flex flex-col space-y-2">
+        <div className="col-span-4 row-span-5 flex flex-col space-y-2">
           {/* Critical Alerts */}
           <div className="flex-1 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden flex flex-col">
             <div className="p-3 border-b border-slate-700/50 flex items-center gap-2">
@@ -222,7 +222,7 @@ export function OptimizedExecutiveDashboard({
           </div>
         </div>
         {/* Analytics section */}
-        <div className="col-span-12 row-span-4 flex gap-2">
+        <div className="col-span-12 row-span-3 flex gap-2">
           <div className="flex-1 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg p-3">
             <h3 className="text-sm font-semibold text-white mb-2">Cross‑Domain Correlation</h3>
             <div className="w-full h-40 md:h-full">
