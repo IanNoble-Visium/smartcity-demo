@@ -424,7 +424,6 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
                           color: '#e5e7eb'
                         }}
                       />
-                      <Legend />
                       <Line
                         type="monotone"
                         dataKey="value"
