@@ -27,8 +27,8 @@ export function AlertDetailModal({ alert, onClose }: AlertDetailModalProps) {
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
-          <motion.div
-            className="bg-slate-900 border border-slate-700 rounded-xl max-w-2xl w-full overflow-hidden shadow-xl"
+            <motion.div
+              className="bg-slate-900 border border-slate-700 rounded-xl max-w-3xl w-full overflow-hidden shadow-xl"
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
@@ -41,10 +41,17 @@ export function AlertDetailModal({ alert, onClose }: AlertDetailModalProps) {
               </div>
               <button className="text-slate-400 hover:text-white" onClick={onClose}>✕</button>
             </div>
-            <div className="px-6 py-4 space-y-3">
-              <div className="text-sm text-slate-300">{alert.description}</div>
-              <div className="w-full aspect-video bg-black rounded overflow-hidden">
-                <video src={videoSrc} controls autoPlay className="w-full h-full object-cover" />
+            <div className="px-6 py-4 space-y-4">
+              <div className="text-sm text-slate-300 max-h-40 overflow-y-auto pr-2">
+                {alert.description}
+              </div>
+              <div className="w-full bg-black rounded overflow-hidden">
+                <video
+                  src={videoSrc}
+                  controls
+                  autoPlay
+                  className="w-full max-h-[60vh] object-contain"
+                />
               </div>
             </div>
           </motion.div>

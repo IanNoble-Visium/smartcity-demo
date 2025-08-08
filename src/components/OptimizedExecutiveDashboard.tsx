@@ -106,7 +106,8 @@ export function OptimizedExecutiveDashboard({
   // map state in sync even if the details dialog is closed.
   const [focusedAlert, setFocusedAlert] = useState<Alert | null>(null);
   // Collapse state for KPI grid; when collapsed, show a compact bar to free vertical space
-  const [kpiCollapsed, setKpiCollapsed] = useState(false);
+  // Collapse KPI section by default to prioritise map/alert visibility; users can expand as needed
+  const [kpiCollapsed, setKpiCollapsed] = useState(true);
 
   // Render a compact horizontal KPI bar when the grid is collapsed.  This bar
   // displays each metric in a condensed format with minimal spacing to
