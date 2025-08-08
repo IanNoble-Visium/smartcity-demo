@@ -2,7 +2,39 @@
 
 A comprehensive smart city operations platform demo showcasing enterprise-grade authentication, role-based access control, real-time monitoring capabilities, and advanced AI-powered analytics. Built for 24/7 operations centers with professional NOC/SOC optimized design.
 
-## 🚀 Latest Updates (v3.0 - Advanced Features Release)
+## 🚀 Latest Updates
+
+### 🎉 **UX & Visualization Enhancements (August 2025)**
+
+The August 2025 release focuses on polishing the user experience, enhancing the map visualizations and ensuring that every dashboard fits comfortably within a single viewport. These improvements build on the advanced feature set introduced in v3.0 and are geared towards executive‑level usability and situational awareness.
+
+#### 🧭 Executive Dashboard Redesign
+- **Single‑Viewport Layout**: The dashboard has been reorganised so that all critical information (map, KPI metrics, alerts, incidents and analytics) is visible without scrolling on standard resolutions (1920×1080 and 1366×768).
+- **Collapsible KPI Bar**: Key metrics (Energy, Traffic, Air Quality, Network latency, Infrastructure health, Security, Budget, Satisfaction) are now presented in a compact bar that can be expanded when detailed trend cards are required.  This frees up vertical space for the map and analytics.
+- **Persistent Panel Heights**: The map and right‑hand sidebar maintain a fixed height even when new alerts arrive.  Alert and incident lists scroll within their panels instead of pushing other content off screen.
+- **Inline Alert Detail Strip**: Selecting an alert opens its full description and associated video in a dedicated panel below the analytics charts.  The panel remains in place even when no alert is selected, preventing the map from growing unexpectedly.
+- **Optimised Analytics Section**: Cross‑Domain Correlation (radar chart), Resource Allocation (bar chart) and Citizen Satisfaction (gauge) now share a row beneath the map.  Each panel is responsive and remains visible regardless of alert activity.
+
+#### 🔔 Enhanced Alert Interactions
+- **Animated Alert Markers**: Alert locations on the map are represented by pulsing markers whose size oscillates subtly over time.  Colours correspond to severity (critical red, high orange, medium yellow, low blue, info green) and draw the operator’s eye to important events.
+- **Hover Tooltips & Click Actions**: Hovering over a marker reveals a tooltip with the alert’s title, severity, description and timestamp.  Clicking on a marker zooms the map to that location and loads the alert into the inline detail strip; clicking on a list entry performs the same action.
+- **Fixed Alert/Incident Panels**: Critical Alerts and Recent Incidents have independent scroll areas and never extend beyond their allotted space.
+
+#### 🗺️ Map & Legend Enhancements
+- **OSM Basemap Integration**: Replaced the wireframe city outline with a fully rendered OpenStreetMap base layer, showing streets, buildings, parks and waterways for realistic spatial context.
+- **Layer Legend**: A new legend overlays the bottom‑left corner of the map, explaining the colour scheme for alert severities and listing available data layers.  The legend dynamically highlights the currently selected layer (Districts, Heatmap, Hex Bins, Flights, Population, Trips) and uses a gradient swatch for heatmaps.
+- **Layer Controls**: Users can switch between geojson polygons, heatmaps, hex bins, flight path lines, population scatterplots and animated trips.  Mock data is used for demonstration; real data integration is planned for future releases.
+- **Performance Optimisation**: Heatmap and hexagon layers use CPU aggregation with tuned radii and coverage to avoid WebGL memory errors.  Dataset sizes have been reduced and the trips animation has been reworked to ensure smooth playback.
+
+#### 📊 Advanced Analytics Stability
+- **Snapshot Mode**: The Advanced Analytics view no longer refreshes automatically with simulated data updates.  When a user navigates to the analytics tab the current metrics are snapshotted and remain static until the user refreshes, preventing distracting auto‑updates.
+- **Collapsible Analytics KPIs**: Similar to the Executive Dashboard, the analytics page features a collapsible KPI section and responsive charts that adapt to the available space.
+
+These enhancements make the TruContext demo more polished and engaging for potential smart‑city clients while maintaining the professional, enterprise‑grade aesthetic.
+
+---
+
+## 🚀 Feature Overview (v3.0 - Advanced Features Release)
 
 ### ✅ **Advanced Analytics and Reporting Module**
 - **Interactive Dashboards**: Real-time KPI cards with trend analysis and drill-down capabilities
