@@ -2,7 +2,8 @@ import { useState, useMemo, useEffect } from 'react';
 import { DeckGL } from '@deck.gl/react';
 import { GeoJsonLayer, ScatterplotLayer, LineLayer } from '@deck.gl/layers';
 import { HeatmapLayer, HexagonLayer } from '@deck.gl/aggregation-layers';
-import { TripsLayer } from '@deck.gl/geo-layers';
+import { TripsLayer, TileLayer } from '@deck.gl/geo-layers';
+import { BitmapLayer } from '@deck.gl/layers';
 // The generic view state type exported by deck.gl does not include all properties
 // used by our application (such as pitch and bearing), and the typed export
 // `ViewState` is no longer available in recent versions.  We therefore use
@@ -106,6 +107,28 @@ export function ExecutiveMapDeck({ className = '' }: ExecutiveMapDeckProps) {
   // Build deck.gl layers based on selected visualization
   const layers = useMemo(() => {
     const baseLayers: any[] = [];
+    // Add a base map from OpenStreetMap tiles.  Using a TileLayer
+    // ensures recognisable geography (streets, buildings, landmarks) while
+    // remaining compatible with deck.gl.  Tiles are fetched on demand and
+    // rendered via BitmapLayer sublayers.
+    const osmLayer = new TileLayer({
+      id: 'osm-tiles',
+      data: 'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      minZoom: 0,
+      maxZoom: 19,
+      tileSize: 256,
+      // Use a function to render bitmap tiles from the OSM tile URL
+      renderSubLayers: props => {
+        const bbox: any = props.tile.bbox;
+        const { west, south, east, north } = bbox;
+        return new BitmapLayer(props, {
+          id: `${props.id}-bitmap`,
+          image: props.data as any,
+          bounds: [west, south, east, north]
+        });
+      }
+    });
+    baseLayers.push(osmLayer);
     // Always display base polygon to give users context
     baseLayers.push(
       new GeoJsonLayer({
