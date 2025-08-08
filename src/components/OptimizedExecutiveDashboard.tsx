@@ -139,9 +139,9 @@ export function OptimizedExecutiveDashboard({
   };
 
   return (
-    <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="h-full min-h-0 overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* 12×12 grid layout to ensure a single viewport without scrolling */}
-      <div className="h-full grid grid-cols-12 grid-rows-12 gap-2 p-2">
+      <div className="h-full min-h-0 grid grid-cols-12 grid-rows-12 gap-2 p-2">
         {/* Header Status Bar */}
         <div className="col-span-12 row-span-1 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg flex items-center justify-between px-4">
           <div className="flex items-center gap-4">
@@ -176,7 +176,7 @@ export function OptimizedExecutiveDashboard({
           )}
         </div>
         {/* Main content: Map and sidebars */}
-        <div className={`col-span-8 ${kpiCollapsed ? 'row-span-4' : 'row-span-3'} bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden`}>
+        <div className={`col-span-8 ${kpiCollapsed ? 'row-span-4' : 'row-span-3'} bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden min-h-0 max-h-full`}>
           <div className="h-full relative">
             {/* Map labels */}
             <div className="absolute top-2 left-2 z-10 bg-slate-900/80 backdrop-blur-md rounded px-2 py-1">
@@ -197,7 +197,7 @@ export function OptimizedExecutiveDashboard({
           </div>
         </div>
         {/* Sidebar: Critical Alerts and Recent Incidents */}
-        <div className={`col-span-4 ${kpiCollapsed ? 'row-span-4' : 'row-span-3'} flex flex-col space-y-2`}>
+        <div className={`col-span-4 ${kpiCollapsed ? 'row-span-4' : 'row-span-3'} flex flex-col min-h-0 space-y-2`}>
           {/* Critical Alerts Panel */}
           <div className="flex-1 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden flex flex-col">
             <div className="p-3 border-b border-slate-700/50 flex items-center gap-2">
@@ -283,9 +283,9 @@ export function OptimizedExecutiveDashboard({
           </div>
         </div>
         {/* Bottom section: Analytics and Alert Detail */}
-        <div className="col-span-12 row-span-5 grid grid-cols-12 gap-2">
+        <div className="col-span-12 row-span-5 grid grid-cols-12 gap-2 min-h-0">
           {/* Analytics panels occupy 8 columns */}
-          <div className="col-span-8 grid grid-cols-3 gap-2">
+          <div className="col-span-8 grid grid-cols-3 gap-2 min-h-0">
             <div className="bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg p-3 flex flex-col">
               <h3 className="text-sm font-semibold text-white mb-2">Cross‑Domain Correlation</h3>
               <div className="flex-1">
