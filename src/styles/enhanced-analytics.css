@@ -1,0 +1,284 @@
+/* Enhanced Smart City Analytics Styles */
+
+.enhanced-advanced-analytics {
+  position: relative;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+/* JointJS Custom Animations */
+.pulse-ring {
+  animation: pulse-animation 2s infinite;
+}
+
+@keyframes pulse-animation {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* Data Flow Animations */
+.data-flow-particle {
+  animation: flow-animation 3s linear infinite;
+}
+
+@keyframes flow-animation {
+  0% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+
+/* Smart City Node Hover Effects */
+.smart-city-node {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.smart-city-node:hover {
+  transform: scale(1.05);
+  filter: drop-shadow(0 4px 8px rgba(59, 130, 246, 0.3));
+}
+
+/* Status Indicator Animations */
+.status-indicator {
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* Energy Flow Lines */
+.energy-flow-line {
+  stroke-dasharray: 8, 4;
+  animation: flow-dash 1.5s linear infinite;
+}
+
+@keyframes flow-dash {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 12;
+  }
+}
+
+/* Modal Backdrop */
+.modal-backdrop {
+  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.6);
+}
+
+/* Enhanced Chart Containers */
+.chart-container {
+  background: rgba(17, 24, 39, 0.8);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  border-radius: 8px;
+  backdrop-filter: blur(4px);
+}
+
+/* Glowing Effects for Active Elements */
+.glow-effect {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+  border: 1px solid rgba(59, 130, 246, 0.6);
+}
+
+/* TruContext Branding Colors */
+.trucontext-primary {
+  color: #3b82f6;
+}
+
+.trucontext-secondary {
+  color: #10b981;
+}
+
+.trucontext-accent {
+  color: #06b6d4;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .enhanced-advanced-analytics {
+    padding: 1rem;
+  }
+  
+  .smart-city-node {
+    transform: scale(0.9);
+  }
+  
+  .modal-content {
+    margin: 1rem;
+    max-height: 90vh;
+  }
+}
+
+/* High Performance Animations */
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform, opacity;
+}
+
+/* Loading States */
+.loading-shimmer {
+  background: linear-gradient(90deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.2) 50%, 
+    rgba(255, 255, 255, 0.1) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Interactive Elements */
+.interactive-element {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.interactive-element:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.interactive-element:active {
+  transform: translateY(0);
+}
+
+/* System Status Colors */
+.status-operational {
+  color: #10b981;
+  fill: #10b981;
+}
+
+.status-warning {
+  color: #f59e0b;
+  fill: #f59e0b;
+}
+
+.status-critical {
+  color: #ef4444;
+  fill: #ef4444;
+}
+
+.status-offline {
+  color: #6b7280;
+  fill: #6b7280;
+}
+
+/* Energy Type Specific Styling */
+.energy-solar {
+  color: #fbbf24;
+  stroke: #fbbf24;
+}
+
+.energy-wind {
+  color: #06b6d4;
+  stroke: #06b6d4;
+}
+
+.energy-hydro {
+  color: #3b82f6;
+  stroke: #3b82f6;
+}
+
+.energy-battery {
+  color: #10b981;
+  stroke: #10b981;
+}
+
+/* Transportation Styling */
+.transport-traffic {
+  color: #f59e0b;
+  stroke: #f59e0b;
+}
+
+.transport-transit {
+  color: #8b5cf6;
+  stroke: #8b5cf6;
+}
+
+.transport-parking {
+  color: #06b6d4;
+  stroke: #06b6d4;
+}
+
+/* Environmental Monitoring */
+.env-air-quality {
+  color: #10b981;
+  stroke: #10b981;
+}
+
+.env-noise {
+  color: #f59e0b;
+  stroke: #f59e0b;
+}
+
+.env-weather {
+  color: #3b82f6;
+  stroke: #3b82f6;
+}
+
+/* Accessibility Enhancements */
+@media (prefers-reduced-motion: reduce) {
+  .pulse-ring,
+  .data-flow-particle,
+  .status-indicator,
+  .energy-flow-line {
+    animation: none;
+  }
+  
+  .smart-city-node:hover {
+    transform: none;
+  }
+}
+
+/* Focus States for Keyboard Navigation */
+.interactive-element:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Print Styles */
+@media print {
+  .enhanced-advanced-analytics {
+    background: white;
+    color: black;
+  }
+  
+  .modal-backdrop {
+    display: none;
+  }
+}
+
