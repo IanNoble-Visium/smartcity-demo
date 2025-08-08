@@ -176,7 +176,7 @@ export function OptimizedExecutiveDashboard({
           )}
         </div>
         {/* Main content: Map and sidebars */}
-        <div className={`col-span-8 ${kpiCollapsed ? 'row-span-5' : 'row-span-4'} bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden`}>
+        <div className={`col-span-8 ${kpiCollapsed ? 'row-span-4' : 'row-span-3'} bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden`}>
           <div className="h-full relative">
             {/* Map labels */}
             <div className="absolute top-2 left-2 z-10 bg-slate-900/80 backdrop-blur-md rounded px-2 py-1">
@@ -197,7 +197,7 @@ export function OptimizedExecutiveDashboard({
           </div>
         </div>
         {/* Sidebar: Critical Alerts and Recent Incidents */}
-        <div className={`col-span-4 ${kpiCollapsed ? 'row-span-5' : 'row-span-4'} flex flex-col space-y-2`}>
+        <div className={`col-span-4 ${kpiCollapsed ? 'row-span-4' : 'row-span-3'} flex flex-col space-y-2`}>
           {/* Critical Alerts Panel */}
           <div className="flex-1 bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden flex flex-col">
             <div className="p-3 border-b border-slate-700/50 flex items-center gap-2">
