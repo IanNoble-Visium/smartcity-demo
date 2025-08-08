@@ -88,6 +88,16 @@ export function ExecutiveMapDeck({ className = '', alerts, onAlertSelect, focuse
     bearing: 0
   });
   const [currentLayer, setCurrentLayer] = useState<LayerType>('geojson');
+  // Pulse animation for alert markers.  The value cycles from 0 to 59 and is
+  // used to modulate marker radius, creating a subtle pulsing effect.  A
+  // relatively small interval ensures smooth animation without heavy CPU usage.
+  const [alertPulse, setAlertPulse] = useState(0);
+  useEffect(() => {
+    const pulseInterval = setInterval(() => {
+      setAlertPulse(t => (t + 1) % 60);
+    }, 100);
+    return () => clearInterval(pulseInterval);
+  }, []);
   // Generate mock data once
   // Generate smaller datasets to improve performance and avoid WebGL
   // memory exhaustion.  Reducing the number of points does not materially
@@ -186,12 +196,34 @@ export function ExecutiveMapDeck({ className = '', alerts, onAlertSelect, focuse
           data: alerts.filter(a => a.location),
           getPosition: (a: Alert) => [a.location!.longitude, a.location!.latitude],
           getFillColor: (a: Alert) => severityColors[a.severity] || severityColors['medium'],
-          getRadius: () => 8,
+          // Increase marker size and add a pulse animation.  The pulse cycles between 0
+          // and 1 using the alertPulse state to modulate the marker radius.  This
+          // draws attention to alerts without overwhelming the map.
+          getRadius: () => {
+            const pulse = Math.sin((alertPulse / 60) * Math.PI * 2) * 0.5 + 0.5;
+            return 8 + pulse * 6;
+          },
           radiusUnits: 'pixels',
           pickable: true,
           onClick: info => {
             const alert = info.object as Alert;
             if (alert && onAlertSelect) onAlertSelect(alert);
+          },
+          // Provide a tooltip on hover with alert details.  A small HTML template
+          // shows the title, severity, description and timestamp.  Styling is kept
+          // inline for simplicity.
+          getTooltip: (info: any) => {
+            if (!info.object) return null;
+            const a = info.object as Alert;
+            const date = new Date(a.timestamp).toLocaleString();
+            return {
+              html: `<div style="max-width:260px;padding:6px;background-color:rgba(15,23,42,0.85);color:#e5e7eb;border-radius:6px;font-size:12px;">
+                      <div style="font-weight:600;margin-bottom:2px;">${a.title}</div>
+                      <div><strong>Severity:</strong> ${a.severity}</div>
+                      <div style="margin-top:2px;">${a.description}</div>
+                      <div style="margin-top:2px;font-size:10px;color:#94a3b8;">${date}</div>
+                    </div>`
+            };
           }
         })
       );
@@ -321,6 +353,70 @@ export function ExecutiveMapDeck({ className = '', alerts, onAlertSelect, focuse
             {LAYER_LABELS[layer]}
           </button>
         ))}
+      </div>
+      {/* Map legend */}
+      <div
+        className="absolute bottom-3 left-3 z-20 p-2 bg-slate-900/70 backdrop-blur-md rounded-lg border border-cyan-400/30 text-xs text-slate-200 space-y-2"
+        style={{ boxShadow: '0 0 10px rgba(6,182,212,0.25)', maxWidth: '240px' }}
+      >
+        {/* Legend title */}
+        <div className="font-semibold text-cyan-300 mb-1">Legend</div>
+        {/* Alerts legend with severity colours */}
+        <div className="flex flex-col">
+          <div className="font-medium mb-1">Alerts</div>
+          <div className="grid grid-cols-3 gap-x-2 gap-y-1">
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'rgb(220,38,38)' }}></span><span>Critical</span></div>
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'rgb(252,165,3)' }}></span><span>High</span></div>
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'rgb(234,179,8)' }}></span><span>Medium</span></div>
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'rgb(59,130,246)' }}></span><span>Low</span></div>
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'rgb(16,185,129)' }}></span><span>Info</span></div>
+          </div>
+        </div>
+        {/* Layers legend */}
+        <div className="flex flex-col space-y-1 mt-2">
+          {(['geojson', 'heatmap', 'hexagon', 'lines', 'scatter', 'trips'] as LayerType[]).map(layer => {
+            let indicator: JSX.Element;
+            // Determine indicator style based on layer
+            switch (layer) {
+              case 'heatmap':
+                indicator = (
+                  <span className="w-4 h-3 bg-gradient-to-r from-red-500 via-yellow-400 to-green-400 rounded-sm"></span>
+                );
+                break;
+              case 'hexagon':
+                indicator = (
+                  <span className="w-4 h-3 bg-purple-600 rounded-sm"></span>
+                );
+                break;
+              case 'lines':
+                indicator = (
+                  <span className="w-4 h-0.5 bg-yellow-500 block"></span>
+                );
+                break;
+              case 'scatter':
+                indicator = (
+                  <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+                );
+                break;
+              case 'trips':
+                indicator = (
+                  <span className="w-4 h-0.5 bg-blue-500 block"></span>
+                );
+                break;
+              case 'geojson':
+              default:
+                indicator = (
+                  <span className="w-4 h-3 bg-cyan-400 rounded-sm"></span>
+                );
+            }
+            return (
+              <div key={layer} className="flex items-center gap-2">
+                {indicator}
+                <span className={currentLayer === layer ? 'text-white font-semibold' : ''}>{LAYER_LABELS[layer]}</span>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
