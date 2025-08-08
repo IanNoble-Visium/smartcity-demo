@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LineChart,
@@ -7,7 +7,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   PieChart,
   Pie,
@@ -51,6 +50,27 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
 
   // Active top-level analytics tab (carbon, maintenance, green)
   const [activeTab, setActiveTab] = useState<'carbon' | 'maintenance' | 'green'>('carbon');
+
+  // Dynamic chart height to guarantee single-viewport fit
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [chartH, setChartH] = useState(150);
+  useEffect(() => {
+    const calc = () => {
+      const el = contentRef.current;
+      if (!el) return;
+      const h = el.clientHeight; // available vertical space inside tab content
+      // Approx chrome per card (header + paddings): ~36px, 2 rows, 1 gap (~4px)
+      const rows = 2;
+      const perCardChrome = 36;
+      const totalGaps = 4; // Tailwind gap-1 => 4px between rows
+      const availablePerCard = Math.max(0, Math.floor((h - totalGaps) / rows) - perCardChrome);
+      const next = Math.max(120, Math.min(180, availablePerCard));
+      setChartH(next);
+    };
+    calc();
+    window.addEventListener('resize', calc);
+    return () => window.removeEventListener('resize', calc);
+  }, [activeTab, compactMode]);
 
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({
@@ -751,15 +771,15 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
     }, [renewableProduction]);
 
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 h-full overflow-y-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-1 h-full min-h-0 overflow-hidden">
         {/* Progress toward net zero */}
         <div className="card flex flex-col">
-          <div className="card-header py-2 flex items-center justify-between">
-            <h3 className="card-title text-base">Net Zero Progress</h3>
+          <div className="card-header py-0.5 flex items-center justify-between">
+            <h3 className="card-title text-sm">Net Zero Progress</h3>
           </div>
-          <div className="card-content flex-1 flex items-center justify-center p-4">
+          <div className="card-content flex-1 flex items-center justify-center p-1">
             <ChartErrorBoundary>
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={chartH}>
                 <RadialBarChart
                   cx="50%"
                   cy="50%"
@@ -780,12 +800,12 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
 
         {/* Real-time power and renewable monitoring */}
         <div className="card flex flex-col">
-          <div className="card-header py-2 flex items-center justify-between">
-            <h3 className="card-title text-base">Power & Renewable Trends</h3>
+          <div className="card-header py-0.5 flex items-center justify-between">
+            <h3 className="card-title text-sm">Power & Renewable Trends</h3>
           </div>
-          <div className="card-content flex-1 p-4">
+          <div className="card-content flex-1 p-1">
             <ChartErrorBoundary>
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={chartH}>
                 <LineChart data={powerSeries.map((d, idx) => ({
                   time: d.time,
                   power: d.value,
@@ -795,7 +815,6 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
                   <XAxis dataKey="time" stroke="#9ca3af" fontSize={10} />
                   <YAxis stroke="#9ca3af" fontSize={10} />
                   <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px', color: '#e5e7eb' }} />
-                  <Legend />
                   <Line type="monotone" dataKey="power" stroke="#3b82f6" strokeWidth={2} dot={false} name="Power Consumption" />
                   <Line type="monotone" dataKey="renewable" stroke="#10b981" strokeWidth={2} dot={false} name="Renewable Production" />
                 </LineChart>
@@ -806,12 +825,12 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
 
         {/* Carbon footprint composition */}
         <div className="card flex flex-col">
-          <div className="card-header py-2 flex items-center justify-between">
-            <h3 className="card-title text-base">Carbon Footprint Composition</h3>
+          <div className="card-header py-0.5 flex items-center justify-between">
+            <h3 className="card-title text-sm">Carbon Footprint Composition</h3>
           </div>
-          <div className="card-content flex-1 p-4">
+          <div className="card-content flex-1 p-1">
             <ChartErrorBoundary>
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={chartH}>
                 <PieChart>
                   <Pie
                     dataKey="value"
@@ -819,7 +838,7 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
                     data={footprintData}
                     cx="50%"
                     cy="50%"
-                    outerRadius={80}
+                    outerRadius={Math.min(80, Math.floor(chartH * 0.45))}
                     label={({ name, percent }) => `${name}: ${(((percent ?? 0) * 100).toFixed(0))}%`}
                   >
                     {footprintData.map((_entry, index) => (
@@ -835,18 +854,18 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
 
         {/* Renewable energy mix */}
         <div className="card flex flex-col">
-          <div className="card-header py-2 flex items-center justify-between">
-            <h3 className="card-title text-base">Renewable Energy Mix</h3>
+          <div className="card-header py-0.5 flex items-center justify-between">
+            <h3 className="card-title text-sm">Renewable Energy Mix</h3>
           </div>
-          <div className="card-content flex-1 p-4">
+          <div className="card-content flex-1 p-1">
             <ChartErrorBoundary>
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={chartH}>
                 <BarChart data={renewableMixData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="name" stroke="#9ca3af" fontSize={10} />
                   <YAxis stroke="#9ca3af" fontSize={10} />
                   <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px', color: '#e5e7eb' }} />
-                  <Bar dataKey="value" fill="#10b981" barSize={20} />
+                  <Bar dataKey="value" fill="#10b981" barSize={16} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartErrorBoundary>
@@ -888,15 +907,15 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
     const downtimeSeries = useMemo(() => generateTimeSeriesData(downtimeMetric, 24), [downtimeMetric]);
 
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 h-full overflow-y-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-1 h-full min-h-0 overflow-hidden">
         {/* Wind turbine health */}
         <div className="card flex flex-col">
-          <div className="card-header py-2 flex items-center justify-between">
-            <h3 className="card-title text-base">Wind Turbine Health</h3>
+          <div className="card-header py-0.5 flex items-center justify-between">
+            <h3 className="card-title text-sm">Wind Turbine Health</h3>
           </div>
-          <div className="card-content flex-1 flex items-center justify-center p-4">
+          <div className="card-content flex-1 flex items-center justify-center p-1">
             <ChartErrorBoundary>
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={chartH}>
                 <RadialBarChart
                   cx="50%"
                   cy="50%"
@@ -917,18 +936,17 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
 
         {/* Solar panel performance */}
         <div className="card flex flex-col">
-          <div className="card-header py-2 flex items-center justify-between">
-            <h3 className="card-title text-base">Solar Panel Performance</h3>
+          <div className="card-header py-0.5 flex items-center justify-between">
+            <h3 className="card-title text-sm">Solar Panel Performance</h3>
           </div>
-          <div className="card-content flex-1 p-4">
+          <div className="card-content flex-1 p-1">
             <ChartErrorBoundary>
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={chartH}>
                 <LineChart data={downtimeSeries.map((d) => ({ time: d.time, performance: solarPerformance + Math.sin(parseInt(d.time.replace(/:/g, ''), 10)) * 5 }))}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="time" stroke="#9ca3af" fontSize={10} />
                   <YAxis stroke="#9ca3af" fontSize={10} />
                   <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px', color: '#e5e7eb' }} />
-                  <Legend />
                   <Line type="monotone" dataKey="performance" stroke="#f59e0b" strokeWidth={2} dot={false} name="Performance (%)" />
                 </LineChart>
               </ResponsiveContainer>
@@ -938,10 +956,10 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
 
         {/* Repair backlog */}
         <div className="card flex flex-col">
-          <div className="card-header py-2 flex items-center justify-between">
-            <h3 className="card-title text-base">Repair Needs & Backlog</h3>
+          <div className="card-header py-0.5 flex items-center justify-between">
+            <h3 className="card-title text-sm">Repair Needs & Backlog</h3>
           </div>
-          <div className="card-content flex-1 p-4">
+          <div className="card-content flex-1 p-1">
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
                 <div className="text-4xl font-bold text-primary">
@@ -955,18 +973,18 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
 
         {/* Downtime & turnaround */}
         <div className="card flex flex-col">
-          <div className="card-header py-2 flex items-center justify-between">
-            <h3 className="card-title text-base">Downtime & Turnaround</h3>
+          <div className="card-header py-0.5 flex items-center justify-between">
+            <h3 className="card-title text-sm">Downtime & Turnaround</h3>
           </div>
-          <div className="card-content flex-1 p-4">
+          <div className="card-content flex-1 p-1">
             <ChartErrorBoundary>
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={chartH}>
                 <BarChart data={downtimeSeries.map((d) => ({ time: d.time, downtime: d.value }))}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="time" stroke="#9ca3af" fontSize={10} />
                   <YAxis stroke="#9ca3af" fontSize={10} />
                   <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px', color: '#e5e7eb' }} />
-                  <Bar dataKey="downtime" fill="#ef4444" barSize={20} name="Downtime (h)" />
+                  <Bar dataKey="downtime" fill="#ef4444" barSize={16} name="Downtime (h)" />
                 </BarChart>
               </ResponsiveContainer>
             </ChartErrorBoundary>
@@ -993,15 +1011,15 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
     ]), []);
 
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 h-full overflow-y-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-1 h-full min-h-0 overflow-hidden">
         {/* Nuclear energy monitoring */}
         <div className="card flex flex-col">
-          <div className="card-header py-2 flex items-center justify-between">
-            <h3 className="card-title text-base">Nuclear Energy Development</h3>
+          <div className="card-header py-0.5 flex items-center justify-between">
+            <h3 className="card-title text-xs">Nuclear Energy Development</h3>
           </div>
-          <div className="card-content flex-1 flex items-center justify-center p-4">
+          <div className="card-content flex-1 flex items-center justify-center p-1">
             <ChartErrorBoundary>
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={chartH}>
                 <RadialBarChart
                   cx="50%"
                   cy="50%"
@@ -1022,19 +1040,19 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
 
         {/* Emerging emissions reduction technologies */}
         <div className="card flex flex-col">
-          <div className="card-header py-2 flex items-center justify-between">
-            <h3 className="card-title text-base">Emissions Reduction Technologies</h3>
+          <div className="card-header py-0.5 flex items-center justify-between">
+            <h3 className="card-title text-sm">Emissions Reduction Technologies</h3>
           </div>
-          <div className="card-content flex-1 p-4">
+          <div className="card-content flex-1 p-1">
             <ChartErrorBoundary>
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={chartH}>
                 <PieChart>
                   <Pie
                     dataKey="value"
                     data={emissionsReduction}
                     cx="50%"
                     cy="50%"
-                    outerRadius={80}
+                    outerRadius={Math.min(80, Math.floor(chartH * 0.45))}
                     label={({ name, percent }) => `${name}: ${(((percent ?? 0) * 100).toFixed(0))}%`}
                   >
                     {emissionsReduction.map((_entry, index) => (
@@ -1050,18 +1068,18 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
 
         {/* Next‑generation renewable systems */}
         <div className="card flex flex-col">
-          <div className="card-header py-2 flex items-center justify-between">
-            <h3 className="card-title text-base">Next‑Gen Renewable Systems</h3>
+          <div className="card-header py-0.5 flex items-center justify-between">
+            <h3 className="card-title text-sm">Next‑Gen Renewable Systems</h3>
           </div>
-          <div className="card-content flex-1 p-4">
+          <div className="card-content flex-1 p-1">
             <ChartErrorBoundary>
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={chartH}>
                 <BarChart data={techAdoption}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="name" stroke="#9ca3af" fontSize={10} />
                   <YAxis stroke="#9ca3af" fontSize={10} />
                   <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px', color: '#e5e7eb' }} />
-                  <Bar dataKey="value" fill="#8b5cf6" barSize={20} />
+                  <Bar dataKey="value" fill="#8b5cf6" barSize={16} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartErrorBoundary>
@@ -1070,10 +1088,10 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
 
         {/* Advanced carbon capture solutions */}
         <div className="card flex flex-col">
-          <div className="card-header py-2 flex items-center justify-between">
-            <h3 className="card-title text-base">Advanced Carbon Capture</h3>
+          <div className="card-header py-0.5 flex items-center justify-between">
+            <h3 className="card-title text-sm">Advanced Carbon Capture</h3>
           </div>
-          <div className="card-content flex-1 p-4">
+          <div className="card-content flex-1 p-1">
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
                 <div className="text-4xl font-bold text-primary">
@@ -1098,10 +1116,12 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
       />
 
       {/* Compact Header with controls */}
-      <div className="relative z-10 flex items-center justify-between mb-3 px-4 py-2 bg-card/80 backdrop-blur-sm border-b border-border">
+      <div className="relative z-10 flex items-center justify-between mb-2 px-3 py-1 bg-card/80 backdrop-blur-sm border-b border-border">
         <div>
-          <h2 className="text-xl font-bold text-primary">Advanced Analytics & Reporting</h2>
-          <p className="text-xs text-muted">Interactive charts, predictive insights, and automated reporting</p>
+          <h2 className="text-lg font-semibold text-primary">Advanced Analytics & Reporting</h2>
+          {!compactMode && (
+            <p className="text-[10px] text-muted">Interactive charts, predictive insights, and automated reporting</p>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -1132,7 +1152,7 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
       </div>
 
       {/* Top-level tab navigation */}
-      <div className="relative z-10 flex items-center gap-2 mb-2 px-4">
+      <div className="relative z-10 flex items-center gap-2 mb-1 px-3">
         <button
           className={`btn btn-ghost btn-xs ${activeTab === 'carbon' ? 'bg-primary/20 text-primary' : ''}`}
           onClick={() => setActiveTab('carbon')}
@@ -1154,17 +1174,19 @@ export function AdvancedAnalytics({ className = '' }: AdvancedAnalyticsProps) {
       </div>
 
       {/* Tab content area */}
-      <div className="relative z-10 flex-1 px-2 pb-2 overflow-hidden">
+      <div ref={contentRef} className="relative z-10 flex-1 min-h-0 px-1 pb-1 overflow-hidden">
         {activeTab === 'carbon' && <CarbonTabContent />}
         {activeTab === 'maintenance' && <MaintenanceTabContent />}
         {activeTab === 'green' && <GreenTabContent />}
-        {/* Hidden legacy components to retain references and satisfy TypeScript unused checks */}
-        <div className="hidden">
-          <CompactKPICards />
-          <CompactMainChart />
-          <CompactAnalyticsGrid />
-          <CompactAIPanel />
-        </div>
+        {/* Legacy components (guarded to avoid mounting and Recharts zero-size warnings) */}
+        {false && (
+          <>
+            <CompactKPICards />
+            <CompactMainChart />
+            <CompactAnalyticsGrid />
+            <CompactAIPanel />
+          </>
+        )}
       </div>
     </div>
   );
