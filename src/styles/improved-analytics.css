@@ -1,0 +1,411 @@
+/* Improved Smart City Analytics Styles */
+
+.improved-advanced-analytics {
+  position: relative;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+/* Isometric View Transform */
+.isometric-transform {
+  transform: perspective(1200px) rotateX(25deg) rotateZ(-35deg);
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center center;
+}
+
+/* Enhanced JointJS Custom Animations */
+.pulse-ring {
+  animation: enhanced-pulse-animation 3s infinite;
+}
+
+@keyframes enhanced-pulse-animation {
+  0% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+/* Enhanced Data Flow Animations */
+.data-flow-particle {
+  animation: enhanced-flow-animation 4s linear infinite;
+}
+
+@keyframes enhanced-flow-animation {
+  0% {
+    offset-distance: 0%;
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  15% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  85% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+/* Smart City Node Enhanced Hover Effects */
+.smart-city-node {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.smart-city-node:hover {
+  transform: scale(1.08) translateY(-2px);
+  filter: drop-shadow(0 8px 16px rgba(59, 130, 246, 0.4));
+}
+
+/* Enhanced Status Indicator Animations */
+.status-indicator {
+  animation: enhanced-status-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes enhanced-status-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.2);
+  }
+}
+
+/* Enhanced Energy Flow Lines */
+.energy-flow-line {
+  stroke-dasharray: 10, 5;
+  animation: enhanced-flow-dash 2s linear infinite;
+}
+
+@keyframes enhanced-flow-dash {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 15;
+  }
+}
+
+/* Enhanced Modal Backdrop */
+.modal-backdrop {
+  backdrop-filter: blur(12px);
+  background: rgba(0, 0, 0, 0.7);
+}
+
+/* Enhanced Chart Containers */
+.chart-container {
+  background: rgba(17, 24, 39, 0.9);
+  border: 1px solid rgba(75, 85, 99, 0.4);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Enhanced Glowing Effects for Active Elements */
+.glow-effect {
+  box-shadow: 
+    0 0 20px rgba(59, 130, 246, 0.5),
+    0 0 40px rgba(59, 130, 246, 0.3),
+    inset 0 0 20px rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.7);
+}
+
+/* TruContext Enhanced Branding Colors */
+.trucontext-primary {
+  color: #3b82f6;
+  text-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+}
+
+.trucontext-secondary {
+  color: #10b981;
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+}
+
+.trucontext-accent {
+  color: #06b6d4;
+  text-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+}
+
+/* Enhanced Grid Background for Isometric View */
+.isometric-transform .joint-paper {
+  background-image: 
+    linear-gradient(rgba(75, 85, 99, 0.3) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(75, 85, 99, 0.3) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Enhanced Connection Lines for Better Visibility */
+.enhanced-connection {
+  filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.6));
+}
+
+/* Improved Responsive Design */
+@media (max-width: 768px) {
+  .improved-advanced-analytics {
+    padding: 0.5rem;
+  }
+  
+  .smart-city-node {
+    transform: scale(0.85);
+  }
+  
+  .isometric-transform {
+    transform: perspective(800px) rotateX(20deg) rotateZ(-30deg);
+  }
+  
+  .modal-content {
+    margin: 0.5rem;
+    max-height: 95vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .isometric-transform {
+    transform: perspective(600px) rotateX(15deg) rotateZ(-25deg);
+  }
+}
+
+/* Enhanced High Performance Animations */
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+/* Enhanced Loading States */
+.loading-shimmer {
+  background: linear-gradient(90deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.3) 50%, 
+    rgba(255, 255, 255, 0.1) 100%);
+  background-size: 200% 100%;
+  animation: enhanced-shimmer 2.5s infinite;
+}
+
+@keyframes enhanced-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Enhanced Interactive Elements */
+.interactive-element {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
+}
+
+.interactive-element:hover {
+  transform: translateY(-3px);
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(59, 130, 246, 0.2);
+}
+
+.interactive-element:active {
+  transform: translateY(-1px);
+}
+
+/* Enhanced System Status Colors with Glow */
+.status-operational {
+  color: #10b981;
+  fill: #10b981;
+  filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.5));
+}
+
+.status-warning {
+  color: #f59e0b;
+  fill: #f59e0b;
+  filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.5));
+}
+
+.status-critical {
+  color: #ef4444;
+  fill: #ef4444;
+  filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.5));
+}
+
+.status-offline {
+  color: #6b7280;
+  fill: #6b7280;
+  filter: drop-shadow(0 0 6px rgba(107, 114, 128, 0.3));
+}
+
+/* Enhanced Energy Type Specific Styling */
+.energy-solar {
+  color: #fbbf24;
+  stroke: #fbbf24;
+  filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.4));
+}
+
+.energy-wind {
+  color: #06b6d4;
+  stroke: #06b6d4;
+  filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.4));
+}
+
+.energy-hydro {
+  color: #3b82f6;
+  stroke: #3b82f6;
+  filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.4));
+}
+
+.energy-battery {
+  color: #10b981;
+  stroke: #10b981;
+  filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.4));
+}
+
+/* Enhanced Transportation Styling */
+.transport-traffic {
+  color: #f59e0b;
+  stroke: #f59e0b;
+  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.4));
+}
+
+.transport-transit {
+  color: #8b5cf6;
+  stroke: #8b5cf6;
+  filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.4));
+}
+
+.transport-parking {
+  color: #06b6d4;
+  stroke: #06b6d4;
+  filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.4));
+}
+
+/* Enhanced Environmental Monitoring */
+.env-air-quality {
+  color: #10b981;
+  stroke: #10b981;
+  filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.4));
+}
+
+.env-noise {
+  color: #f59e0b;
+  stroke: #f59e0b;
+  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.4));
+}
+
+.env-weather {
+  color: #3b82f6;
+  stroke: #3b82f6;
+  filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.4));
+}
+
+/* Enhanced Accessibility Features */
+@media (prefers-reduced-motion: reduce) {
+  .pulse-ring,
+  .data-flow-particle,
+  .status-indicator,
+  .energy-flow-line,
+  .isometric-transform {
+    animation: none;
+    transition: none;
+  }
+  
+  .smart-city-node:hover {
+    transform: none;
+  }
+}
+
+/* Enhanced Focus States for Keyboard Navigation */
+.interactive-element:focus {
+  outline: 3px solid #3b82f6;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.2);
+}
+
+/* Enhanced Print Styles */
+@media print {
+  .improved-advanced-analytics {
+    background: white;
+    color: black;
+  }
+  
+  .modal-backdrop,
+  .isometric-transform {
+    display: none;
+  }
+  
+  .chart-container {
+    background: white;
+    border: 1px solid #ccc;
+  }
+}
+
+/* Enhanced Scrollbar Styling */
+.improved-advanced-analytics ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.improved-advanced-analytics ::-webkit-scrollbar-track {
+  background: rgba(75, 85, 99, 0.2);
+  border-radius: 4px;
+}
+
+.improved-advanced-analytics ::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.6);
+  border-radius: 4px;
+}
+
+.improved-advanced-analytics ::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.8);
+}
+
+/* Enhanced Connection Animation Variants */
+.connection-primary {
+  stroke: #3b82f6;
+  stroke-width: 3;
+  animation: connection-flow-primary 3s linear infinite;
+}
+
+.connection-secondary {
+  stroke: #8b5cf6;
+  stroke-width: 2;
+  stroke-dasharray: 8, 4;
+  animation: connection-flow-secondary 4s linear infinite;
+}
+
+.connection-tertiary {
+  stroke: #ec4899;
+  stroke-width: 2;
+  stroke-dasharray: 5, 5;
+  animation: connection-flow-tertiary 5s linear infinite;
+}
+
+@keyframes connection-flow-primary {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 20; }
+}
+
+@keyframes connection-flow-secondary {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 12; }
+}
+
+@keyframes connection-flow-tertiary {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 10; }
+}
+
