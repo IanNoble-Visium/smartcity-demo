@@ -1,5 +1,6 @@
 /* TruContext Smart City Platform Styles */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import './styles/enhanced-analytics.css';
 
 :root {
   /* TruContext Color System */
@@ -248,6 +249,8 @@ body {
 .right-0 { right: 0; }
 .bottom-0 { bottom: 0; }
 .left-0 { left: 0; }
+.inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+.isolate { isolation: isolate; }
 
 /* Z-Index */
 .z-10 { z-index: 10; }
@@ -255,6 +258,7 @@ body {
 .z-30 { z-index: 30; }
 .z-40 { z-index: 40; }
 .z-50 { z-index: 50; }
+.\-z-10 { z-index: -10; }
 
 .col-span-12 {
   grid-column: span 12 / span 12;
@@ -279,6 +283,11 @@ body {
 .bg-slate-900 {
   background-color: #0f172a;
 }
+
+/* Additional background and border utilities used by components */
+.bg-gray-900\/50 { background-color: rgba(17, 24, 39, 0.5); }
+.border-gray-700 { border-color: #374151; }
+.backdrop-blur-sm { backdrop-filter: blur(4px); }
 
 .rounded-lg {
   border-radius: 0.5rem;

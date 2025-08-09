@@ -15,6 +15,8 @@ interface VideoBackgroundProps {
   children?: React.ReactNode;
 }
 
+const DISABLE_VIDEOS = true;
+
 const VideoBackground = memo(function VideoBackground({
   videoSrc,
   className = '',
@@ -34,6 +36,9 @@ const VideoBackground = memo(function VideoBackground({
   const [lastSrc, setLastSrc] = useState<string | null>(null);
 
   useEffect(() => {
+    if (DISABLE_VIDEOS) {
+      return; // Skip setting up video entirely
+    }
     const video = videoRef.current;
     if (!video) return;
 
@@ -93,27 +98,29 @@ const VideoBackground = memo(function VideoBackground({
   }, [videoSrc, lastSrc, isLoaded, hasError]);
 
   return (
-    <div className={`relative overflow-hidden ${className}`}>
-      {/* Video Element */}
-      <motion.video
-        ref={videoRef}
-        className="absolute inset-0 w-full h-full object-cover"
-        src={videoSrc}
-        muted={muted}
-        loop={loop}
-        autoPlay={autoPlay}
-        playsInline
-        preload="metadata"
-        initial={{ opacity: 0, scale: 1.1 }}
-        animate={{ 
-          opacity: isLoaded && !hasError ? 1 : 0,
-          scale: isLoaded && !hasError ? 1 : 1.1
-        }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-      />
+    <div className={`relative overflow-hidden ${className}`} style={{ pointerEvents: 'none' }}>
+      {/* Video Element disabled */}
+      {!DISABLE_VIDEOS && (
+        <motion.video
+          ref={videoRef}
+          className="absolute inset-0 w-full h-full object-cover"
+          src={videoSrc}
+          muted={muted}
+          loop={loop}
+          autoPlay={autoPlay}
+          playsInline
+          preload="metadata"
+          initial={{ opacity: 0, scale: 1.1 }}
+          animate={{ 
+            opacity: isLoaded && !hasError ? 1 : 0,
+            scale: isLoaded && !hasError ? 1 : 1.1
+          }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        />
+      )}
 
       {/* Fallback Content */}
-      {(hasError || !isLoaded) && (
+      {(DISABLE_VIDEOS || hasError || !isLoaded) && (
         <div className="absolute inset-0 w-full h-full">
           {/* Fallback Image */}
           {fallbackImage && (
@@ -124,15 +131,15 @@ const VideoBackground = memo(function VideoBackground({
           )}
 
           {/* Fallback Gradient */}
-          {!fallbackImage && fallbackGradient && (
+          {!fallbackImage && (fallbackGradient || DISABLE_VIDEOS) && (
             <div
               className="absolute inset-0 w-full h-full"
-              style={{ background: fallbackGradient }}
+              style={{ background: fallbackGradient || 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' }}
             />
           )}
 
           {/* Default Animated Fallback */}
-          {!fallbackImage && !fallbackGradient && enableAnimatedFallback && (
+          {!fallbackImage && !fallbackGradient && !DISABLE_VIDEOS && enableAnimatedFallback && (
             <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
               {/* Animated grid pattern */}
               <div className="absolute inset-0 opacity-20">
@@ -201,13 +208,13 @@ const VideoBackground = memo(function VideoBackground({
 
       {/* Content */}
       {children && (
-        <div className="relative z-10 h-full">
+        <div className="relative z-10 h-full" style={{ pointerEvents: 'auto' }}>
           {children}
         </div>
       )}
 
       {/* Loading indicator */}
-      {!isLoaded && !hasError && (
+      {!DISABLE_VIDEOS && !isLoaded && !hasError && (
         <div className="absolute inset-0 flex items-center justify-center bg-secondary">
           <div className="flex items-center gap-2 text-muted">
             <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import "./index.css";
 import { Header } from "./components/Header";
-import { AdvancedAnalytics } from "./components/AdvancedAnalytics";
+import { EnhancedAdvancedAnalytics } from "./components/EnhancedAdvancedAnalytics";
 import { AnomalyDetectionEngine } from "./components/AnomalyDetectionEngine";
 import { GeospatialTrackingSystem } from "./components/GeospatialTrackingSystem";
 import { ExternalSystemsIntegration } from "./components/ExternalSystemsIntegration";
@@ -127,7 +127,7 @@ function Dashboard() {
       <Navigation />
       
       {/* Main Content */}
-      <main className="relative z-10 flex-1 min-h-0">
+      <main className="relative z-10 flex flex-col flex-1 min-h-0">
         {activeView === 'dashboard' && (
           <OptimizedExecutiveDashboard
             metrics={metrics}
@@ -138,7 +138,7 @@ function Dashboard() {
         )}
         
         {activeView === 'analytics' && (
-          <AdvancedAnalytics />
+          <EnhancedAdvancedAnalytics />
         )}
         
         {activeView === 'anomaly' && (

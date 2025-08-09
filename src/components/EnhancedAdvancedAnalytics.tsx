@@ -19,12 +19,8 @@ import {
   Bar
 } from 'recharts';
 import { useDataStore, useUIStore } from '../store';
-import { ContextualVideoBackground } from './VideoBackground';
 import { ChartErrorBoundary } from './ErrorBoundary';
-import type {
-  AnalyticsMetric,
-  TimeRange
-} from '../types/analytics';
+import type { AnalyticsMetric } from '../types/analytics';
 
 interface EnhancedAdvancedAnalyticsProps {
   className?: string;
@@ -34,7 +30,7 @@ interface EnhancedAdvancedAnalyticsProps {
 class SmartCityHub extends joint.dia.Element {
   defaults() {
     return {
-      ...super.defaults,
+      // Explicit defaults (avoid spreading super.defaults to satisfy TS typings)
       type: 'smartcity.Hub',
       size: { width: 120, height: 120 },
       attrs: {
@@ -52,24 +48,41 @@ class SmartCityHub extends joint.dia.Element {
           filter: {
             name: 'dropShadow',
             args: { dx: 2, dy: 2, blur: 4, color: 'rgba(0,0,0,0.3)' }
-          }
+          },
+          // Explicit geometry so the circle renders without relying on refs
+          cx: 60,
+          cy: 60,
+          r: 60
         },
         label: {
-          text: 'TruContext\nCommand',
+          text: 'TruContext',
           fill: '#ffffff',
           fontSize: 12,
           fontWeight: 'bold',
           textAnchor: 'middle',
-          textVerticalAnchor: 'middle'
+          textVerticalAnchor: 'middle',
+          // Center label on the body
+          ref: 'body',
+          refX: '50%',
+          refY: '50%'
         },
         statusRing: {
           fill: 'none',
           stroke: '#10b981',
           strokeWidth: 2,
           strokeDasharray: '5,5',
-          r: 'calc(0.9*r)',
-          cx: 'calc(w/2)',
-          cy: 'calc(h/2)'
+          // Position the ring relative to the body circle
+          ref: 'body',
+          refR: '90%',
+          refCx: '50%',
+          refCy: '50%'
+        },
+        pulseRing: {
+          // Static pulse ring positioned relative to the body
+          ref: 'body',
+          refR: '100%',
+          refCx: '50%',
+          refCy: '50%'
         }
       }
     };
@@ -80,12 +93,10 @@ class SmartCityHub extends joint.dia.Element {
       <circle @selector="body" />
       <circle @selector="statusRing" />
       <text @selector="label" />
-      <g @selector="pulseGroup">
-        <circle class="pulse-ring" r="calc(r)" cx="calc(w/2)" cy="calc(h/2)" fill="none" stroke="#10b981" stroke-width="1" opacity="0">
-          <animate attributeName="r" values="calc(r);calc(1.5*r);calc(2*r)" dur="2s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values="0.8;0.4;0" dur="2s" repeatCount="indefinite"/>
-        </circle>
-      </g>
+      <!-- Simplified pulse ring without calc() to avoid runtime errors -->
+      <circle @selector="pulseRing" fill="none" stroke="#10b981" stroke-width="1" opacity="0.4">
+        <animate attributeName="opacity" values="0.8;0.3;0.8" dur="2s" repeatCount="indefinite"/>
+      </circle>
     `;
   }
 }
@@ -93,7 +104,7 @@ class SmartCityHub extends joint.dia.Element {
 class SmartCityNode extends joint.dia.Element {
   defaults() {
     return {
-      ...super.defaults,
+      // Explicit defaults (avoid spreading super.defaults to satisfy TS typings)
       type: 'smartcity.Node',
       nodeType: 'energy', // energy, transport, environment
       size: { width: 100, height: 80 },
@@ -107,15 +118,20 @@ class SmartCityNode extends joint.dia.Element {
           filter: {
             name: 'dropShadow',
             args: { dx: 1, dy: 1, blur: 3, color: 'rgba(0,0,0,0.4)' }
-          }
+          },
+          // Make rect follow element size
+          refWidth: '100%',
+          refHeight: '100%'
         },
         icon: {
           fill: '#60a5fa',
           fontSize: 24,
           textAnchor: 'middle',
           textVerticalAnchor: 'middle',
-          x: 'calc(w/2)',
-          y: 'calc(h/2 - 10)'
+          ref: 'body',
+          refX: '50%',
+          refY: '50%',
+          refDy: -10
         },
         label: {
           text: 'System',
@@ -124,14 +140,19 @@ class SmartCityNode extends joint.dia.Element {
           fontWeight: 600,
           textAnchor: 'middle',
           textVerticalAnchor: 'middle',
-          x: 'calc(w/2)',
-          y: 'calc(h/2 + 15)'
+          ref: 'body',
+          refX: '50%',
+          refY: '50%',
+          refDy: 15
         },
         statusIndicator: {
           fill: '#10b981',
           r: 4,
-          cx: 'calc(w - 8)',
-          cy: 8
+          ref: 'body',
+          refCx: '100%',
+          refCy: 0,
+          refDx: -8,
+          refDy: 8
         }
       }
     };
@@ -145,11 +166,7 @@ class SmartCityNode extends joint.dia.Element {
       <circle @selector="statusIndicator">
         <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
       </circle>
-      <g @selector="flowLines" opacity="0.7">
-        <line x1="0" y1="calc(h/2)" x2="calc(w)" y2="calc(h/2)" stroke="#10b981" stroke-width="2" stroke-dasharray="5,5">
-          <animate attributeName="stroke-dashoffset" values="0;10" dur="1s" repeatCount="indefinite"/>
-        </line>
-      </g>
+      <!-- Removed flow line using calc() to avoid runtime errors -->
     `;
   }
 }
@@ -158,7 +175,7 @@ class SmartCityNode extends joint.dia.Element {
 class SmartCityLink extends joint.dia.Link {
   defaults() {
     return {
-      ...super.defaults,
+      // Explicit defaults (avoid spreading super.defaults to satisfy TS typings)
       type: 'smartcity.Link',
       attrs: {
         line: {
@@ -181,13 +198,6 @@ class SmartCityLink extends joint.dia.Link {
       <path @selector="line">
         <animate attributeName="stroke-dashoffset" values="0;12" dur="1.5s" repeatCount="indefinite"/>
       </path>
-      <g @selector="dataFlow">
-        <circle r="3" fill="#10b981" opacity="0.8">
-          <animateMotion dur="3s" repeatCount="indefinite">
-            <mpath href="#linkPath"/>
-          </animateMotion>
-        </circle>
-      </g>
     `;
   }
 }
@@ -195,15 +205,11 @@ class SmartCityLink extends joint.dia.Link {
 export function EnhancedAdvancedAnalytics({ className = '' }: EnhancedAdvancedAnalyticsProps) {
   const { metrics } = useDataStore();
   const { addNotification } = useUIStore();
-  const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange['preset']>('24h');
-  const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
-  const [isExporting, setIsExporting] = useState(false);
 
   // JointJS diagram reference and active panel state
   const diagramRef = useRef<HTMLDivElement>(null);
   const paperRef = useRef<joint.dia.Paper | null>(null);
   const graphRef = useRef<joint.dia.Graph | null>(null);
-  const [activePanel, setActivePanel] = useState<null | 'carbon' | 'maintenance' | 'green'>(null);
   const [isAnimating, setIsAnimating] = useState(true);
 
   // Enhanced modal state for better visibility
@@ -224,9 +230,39 @@ export function EnhancedAdvancedAnalytics({ className = '' }: EnhancedAdvancedAn
     const el = diagramRef.current;
     if (!el) return;
 
+    // Force visible sizing on container and wrapper to avoid collapse
+    try {
+      el.style.minHeight = '420px';
+      el.style.height = '100%';
+      el.style.width = '100%';
+      el.style.display = 'block';
+      const wrapper = el.parentElement as HTMLElement | null;
+      if (wrapper) {
+        if (!wrapper.style.minHeight) wrapper.style.minHeight = '420px';
+        if (!wrapper.style.height) wrapper.style.height = '100%';
+        if (!wrapper.style.display) wrapper.style.display = 'flex';
+        if (!wrapper.style.flex) wrapper.style.flex = '1 1 auto';
+      }
+    } catch {}
+
     // Clean up previous diagram
     if (paperRef.current) {
-      paperRef.current.remove();
+      // Paper typings may miss remove(); cast safely
+      (paperRef.current as unknown as { remove?: () => void })?.remove?.();
+      paperRef.current = null;
+    }
+
+    // Diagnostics
+    const parent = el.parentElement as HTMLElement | null;
+    console.log('[EnhancedAdvancedAnalytics] init diagram container size', {
+      clientWidth: el.clientWidth,
+      clientHeight: el.clientHeight,
+      offsetWidth: el.offsetWidth,
+      offsetHeight: el.offsetHeight
+    });
+    if (parent) {
+      const pr = parent.getBoundingClientRect();
+      console.log('[EnhancedAdvancedAnalytics] parent wrapper rect', { w: pr.width, h: pr.height, display: getComputedStyle(parent).display });
     }
 
     // Create namespace for custom elements
@@ -238,133 +274,228 @@ export function EnhancedAdvancedAnalytics({ className = '' }: EnhancedAdvancedAn
       }
     };
 
-    const graph = new joint.dia.Graph({}, { cellNamespace: namespace });
-    const paper = new joint.dia.Paper({
-      el: el,
-      model: graph,
-      width: el.clientWidth || 800,
-      height: el.clientHeight || 500,
-      gridSize: 10,
-      drawGrid: false,
-      interactive: { linkMove: false },
-      cellViewNamespace: namespace,
-      background: {
-        color: 'transparent'
+    let rafId = 0 as number | any;
+    let timeoutId = 0 as number | any;
+    let rectLogger: any = null;
+
+    const initWhenVisible = () => {
+      const rect = el.getBoundingClientRect();
+      if (!rect.width || !rect.height) {
+        // Wait until container has non-zero size
+        rafId = requestAnimationFrame(initWhenVisible);
+        return;
       }
-    });
 
-    graphRef.current = graph;
-    paperRef.current = paper;
-
-    // Create central TruContext hub
-    const centralHub = new SmartCityHub();
-    centralHub.position(340, 180);
-    centralHub.addTo(graph);
-
-    // Create smart city nodes with enhanced styling
-    const energyNode = new SmartCityNode();
-    energyNode.set({
-      nodeType: 'energy',
-      position: { x: 100, y: 300 }
-    });
-    energyNode.attr({
-      icon: { text: '⚡' },
-      label: { text: 'Green Energy' },
-      body: { stroke: '#10b981' },
-      statusIndicator: { fill: '#10b981' }
-    });
-    energyNode.addTo(graph);
-
-    const maintenanceNode = new SmartCityNode();
-    maintenanceNode.set({
-      nodeType: 'maintenance',
-      position: { x: 340, y: 350 }
-    });
-    maintenanceNode.attr({
-      icon: { text: '🔧' },
-      label: { text: 'Maintenance' },
-      body: { stroke: '#f59e0b' },
-      statusIndicator: { fill: '#f59e0b' }
-    });
-    maintenanceNode.addTo(graph);
-
-    const carbonNode = new SmartCityNode();
-    carbonNode.set({
-      nodeType: 'carbon',
-      position: { x: 580, y: 300 }
-    });
-    carbonNode.attr({
-      icon: { text: '🌱' },
-      label: { text: 'Carbon Emissions' },
-      body: { stroke: '#06b6d4' },
-      statusIndicator: { fill: '#06b6d4' }
-    });
-    carbonNode.addTo(graph);
-
-    // Create animated links with data flow
-    const createAnimatedLink = (source: joint.dia.Element, target: joint.dia.Element, color: string) => {
-      const link = new SmartCityLink();
-      link.source({ id: source.id });
-      link.target({ id: target.id });
-      link.attr({
-        line: {
-          stroke: color,
-          strokeWidth: 2,
-          targetMarker: {
-            fill: color,
-            stroke: color
-          }
-        }
+      const graph = new joint.dia.Graph({}, { cellNamespace: namespace });
+      const paper = new joint.dia.Paper({
+        el: el,
+        model: graph,
+        width: Math.max(300, rect.width),
+        height: Math.max(300, rect.height),
+        gridSize: 20,
+        drawGrid: true,
+        interactive: { linkMove: false },
+        cellViewNamespace: namespace,
+        background: { color: 'transparent' }
       });
-      link.addTo(graph);
-      return link;
+
+      graphRef.current = graph;
+      paperRef.current = paper;
+
+      paper.on('render:done', () => {
+        console.log('[EnhancedAdvancedAnalytics] paper render:done');
+      });
+      (paper as any).el?.addEventListener?.('click', () => {
+        console.log('[EnhancedAdvancedAnalytics] paper DOM clicked');
+      });
+
+      console.log('[EnhancedAdvancedAnalytics] paper created with size', {
+        width: paper.options.width,
+        height: paper.options.height
+      });
+
+      // Adjust after layout settles
+      const adjustDims = () => {
+        const r = el.getBoundingClientRect();
+        const w = Math.max(300, r.width || el.clientWidth || 800);
+        const h = Math.max(300, r.height || el.clientHeight || 500);
+        if ((paper as any).setDimensions) {
+          (paper as any).setDimensions(w, h);
+          console.log('[EnhancedAdvancedAnalytics] paper dimensions adjusted', { w, h });
+        }
+      };
+      rafId = requestAnimationFrame(adjustDims);
+      timeoutId = setTimeout(adjustDims, 75);
+
+      // Log container rect a few times to detect layout shifts
+      let t = 0;
+      rectLogger = setInterval(() => {
+        const r = el.getBoundingClientRect();
+        console.log('[EnhancedAdvancedAnalytics] container rect tick', t, { w: r.width, h: r.height });
+        t += 1;
+        if (t > 10) clearInterval(rectLogger);
+      }, 250);
+
+      // Proceed with rest of the diagram setup (nodes/links and observers live below)
+      continueSetup(graph, paper);
     };
 
-    createAnimatedLink(centralHub, energyNode, '#10b981');
-    createAnimatedLink(centralHub, maintenanceNode, '#f59e0b');
-    createAnimatedLink(centralHub, carbonNode, '#06b6d4');
+    const continueSetup = (graph: joint.dia.Graph, paper: joint.dia.Paper) => {
+      // Observe visibility and size changes for debugging
+      const RO = (window as any).ResizeObserver;
+      const IO = (window as any).IntersectionObserver;
+      const MO = (window as any).MutationObserver;
 
-    // Enhanced click handling with better modal system
-    paper.on('element:pointerclick', (cellView: any) => {
-      const element = cellView.model;
-      const nodeType = element.get('nodeType');
-      
-      if (nodeType) {
-        const titles = {
-          energy: 'Green Energy Systems',
-          maintenance: 'Maintenance Operations',
-          carbon: 'Carbon Emissions Monitoring'
-        };
-        
-        setModalContent({
-          type: nodeType as 'carbon' | 'maintenance' | 'green',
-          title: titles[nodeType as keyof typeof titles] || 'System Details',
-          isOpen: true
+      const ro = RO ? new RO((entries: any[]) => {
+        for (const entry of entries) {
+          const { width, height } = entry.contentRect || {};
+          console.log('[EnhancedAdvancedAnalytics] ResizeObserver', { width, height });
+          if (width && height && paperRef.current && (paperRef.current as any).setDimensions) {
+            (paperRef.current as any).setDimensions(Math.max(300, width), Math.max(300, height));
+          }
+        }
+      }) : null;
+      try { ro && ro.observe(el); } catch {}
+
+      const io = IO ? new IO((entries: any[]) => {
+        for (const entry of entries) {
+          console.log('[EnhancedAdvancedAnalytics] IntersectionObserver', {
+            isIntersecting: entry.isIntersecting,
+            intersectionRatio: entry.intersectionRatio
+          });
+        }
+      }, { threshold: [0, 0.01, 0.25, 0.5, 1] }) : null;
+      try { io && io.observe(el); } catch {}
+
+      const mo = MO ? new MO((mutations: any[]) => {
+        for (const m of mutations) {
+          if (m.type === 'attributes' && (m.attributeName === 'class' || m.attributeName === 'style')) {
+            console.log('[EnhancedAdvancedAnalytics] MutationObserver attr', {
+              className: (el as HTMLElement).className,
+              style: (el as HTMLElement).getAttribute('style')
+            });
+          }
+        }
+      }) : null;
+      try { mo && mo.observe(el, { attributes: true }); } catch {}
+
+      const onVisChange = () => {
+        console.log('[EnhancedAdvancedAnalytics] document visibility', document.visibilityState);
+      };
+      document.addEventListener('visibilitychange', onVisChange);
+
+      // Create diagram content
+      const centralHub = new SmartCityHub();
+      centralHub.position(340, 180);
+      centralHub.addTo(graph);
+      console.log('[EnhancedAdvancedAnalytics] centralHub added', centralHub.id);
+
+      const energyNode = new SmartCityNode();
+      (energyNode as unknown as { set: (key: string, val: any) => void }).set('nodeType', 'energy');
+      energyNode.position(100, 300);
+      energyNode.attr({
+        icon: { text: '⚡' },
+        label: { text: 'Green Energy' },
+        body: { stroke: '#10b981' },
+        statusIndicator: { fill: '#10b981' }
+      });
+      energyNode.addTo(graph);
+      console.log('[EnhancedAdvancedAnalytics] energyNode added', energyNode.id);
+
+      const maintenanceNode = new SmartCityNode();
+      (maintenanceNode as unknown as { set: (key: string, val: any) => void }).set('nodeType', 'maintenance');
+      maintenanceNode.position(340, 350);
+      maintenanceNode.attr({
+        icon: { text: '🔧' },
+        label: { text: 'Maintenance' },
+        body: { stroke: '#f59e0b' },
+        statusIndicator: { fill: '#f59e0b' }
+      });
+      maintenanceNode.addTo(graph);
+      console.log('[EnhancedAdvancedAnalytics] maintenanceNode added', maintenanceNode.id);
+
+      const carbonNode = new SmartCityNode();
+      (carbonNode as unknown as { set: (key: string, val: any) => void }).set('nodeType', 'carbon');
+      carbonNode.position(580, 300);
+      carbonNode.attr({
+        icon: { text: '🌱' },
+        label: { text: 'Carbon Emissions' },
+        body: { stroke: '#06b6d4' },
+        statusIndicator: { fill: '#06b6d4' }
+      });
+      carbonNode.addTo(graph);
+      console.log('[EnhancedAdvancedAnalytics] carbonNode added', carbonNode.id);
+
+      const createAnimatedLink = (source: joint.dia.Element, target: joint.dia.Element, color: string) => {
+        const link = new SmartCityLink();
+        link.source({ id: source.id });
+        link.target({ id: target.id });
+        link.attr({
+          line: {
+            stroke: color,
+            strokeWidth: 2,
+            targetMarker: {
+              fill: color,
+              stroke: color
+            }
+          }
         });
-      }
-    });
+        link.addTo(graph);
+        return link;
+      };
 
-    // Add hover effects
-    paper.on('element:mouseenter', (cellView: any) => {
-      const element = cellView.model;
-      if (element.get('nodeType')) {
-        element.attr('body/stroke-width', 3);
-        element.attr('body/filter/args/blur', 6);
-      }
-    });
+      createAnimatedLink(centralHub, energyNode, '#10b981');
+      createAnimatedLink(centralHub, maintenanceNode, '#f59e0b');
+      createAnimatedLink(centralHub, carbonNode, '#06b6d4');
+      console.log('[EnhancedAdvancedAnalytics] links created');
 
-    paper.on('element:mouseleave', (cellView: any) => {
-      const element = cellView.model;
-      if (element.get('nodeType')) {
-        element.attr('body/stroke-width', 2);
-        element.attr('body/filter/args/blur', 3);
-      }
-    });
+      // Interactions
+      paper.on('element:pointerclick', (cellView: any) => {
+        const element = cellView.model;
+        const nodeType = element.get('nodeType');
+        if (nodeType) {
+          const titles = { energy: 'Green Energy Systems', maintenance: 'Maintenance Operations', carbon: 'Carbon Emissions Monitoring' } as const;
+          setModalContent({ type: nodeType as 'carbon' | 'maintenance' | 'green', title: titles[nodeType as keyof typeof titles] || 'System Details', isOpen: true });
+        }
+      });
+      paper.on('element:mouseenter', (cellView: any) => {
+        const element = cellView.model;
+        if (element.get('nodeType')) {
+          element.attr('body/stroke-width', 3);
+          element.attr('body/filter/args/blur', 6);
+        }
+      });
+      paper.on('element:mouseleave', (cellView: any) => {
+        const element = cellView.model;
+        if (element.get('nodeType')) {
+          element.attr('body/stroke-width', 2);
+          element.attr('body/filter/args/blur', 3);
+        }
+      });
+
+      // Teardown hook
+      cleanupFns.push(() => {
+        try { ro && ro.disconnect && ro.disconnect(); } catch {}
+        try { io && io.disconnect && io.disconnect(); } catch {}
+        try { mo && mo.disconnect && mo.disconnect(); } catch {}
+        document.removeEventListener('visibilitychange', onVisChange);
+      });
+    };
+
+    const cleanupFns: Array<() => void> = [];
+    rafId = requestAnimationFrame(initWhenVisible);
+
+    // The rest of the setup occurs in continueSetup once the container is measurable
 
     return () => {
       if (paperRef.current) {
-        paperRef.current.remove();
+        (paperRef.current as unknown as { remove?: () => void })?.remove?.();
+        paperRef.current = null;
       }
+      try { rectLogger && clearInterval(rectLogger); } catch {}
+      try { rafId && cancelAnimationFrame(rafId); } catch {}
+      try { timeoutId && clearTimeout(timeoutId); } catch {}
+      try { cleanupFns.forEach(fn => fn()); } catch {}
     };
   }, []);
 
@@ -489,7 +620,7 @@ export function EnhancedAdvancedAnalytics({ className = '' }: EnhancedAdvancedAn
                       cy="50%"
                       outerRadius={60}
                       dataKey="value"
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) => `${name}: ${(((percent ?? 0) * 100)).toFixed(0)}%`}
                     >
                       {energyMixData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -664,7 +795,7 @@ export function EnhancedAdvancedAnalytics({ className = '' }: EnhancedAdvancedAn
                       cy="50%"
                       outerRadius={60}
                       dataKey="value"
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) => `${name}: ${(((percent ?? 0) * 100)).toFixed(0)}%`}
                     >
                       {emissionsData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -713,12 +844,16 @@ export function EnhancedAdvancedAnalytics({ className = '' }: EnhancedAdvancedAn
   };
 
   return (
-    <div className={`enhanced-advanced-analytics ${className} h-full min-h-0 overflow-hidden flex flex-col`}>
-      {/* Video Background */}
-      <ContextualVideoBackground
-        context="analytics"
+    <div
+      className={`enhanced-advanced-analytics ${className} relative isolate flex-1 min-h-0 overflow-hidden flex flex-col`}
+      style={{ height: 'calc(100vh - 120px)', minHeight: 500 }}
+    >
+      {/* Temporarily disable video background to avoid overlay/z-index issues */}
+      <div
         className="absolute inset-0 -z-10"
-        overlayOpacity={0.85}
+        style={{
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0b1220 100%)'
+        }}
       />
 
       {/* Enhanced Header */}
@@ -749,11 +884,11 @@ export function EnhancedAdvancedAnalytics({ className = '' }: EnhancedAdvancedAn
       </div>
 
       {/* Enhanced Diagram Area */}
-      <div className="relative z-10 flex-1 flex overflow-hidden px-4 pb-4">
-        <div 
-          ref={diagramRef} 
+      <div className="relative z-10 flex-1 min-h-0 flex overflow-hidden px-4 pb-4" id="enhanced-analytics-diagram-wrapper">
+        <div
+          ref={diagramRef}
           className="flex-1 bg-gray-900/50 backdrop-blur-sm rounded-lg border border-gray-700 relative overflow-hidden"
-          style={{ minHeight: '400px' }}
+          style={{ minHeight: '420px', position: 'relative' }}
         />
       </div>
 

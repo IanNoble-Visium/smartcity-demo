@@ -5,6 +5,11 @@
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
 }
 
+/* Ensure the diagram wrapper cannot collapse */
+#enhanced-analytics-diagram-wrapper {
+  min-height: 420px;
+}
+
 /* JointJS Custom Animations */
 .pulse-ring {
   animation: pulse-animation 2s infinite;
